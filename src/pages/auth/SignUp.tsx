@@ -1,14 +1,26 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeSlash, Student, ChalkboardTeacher } from '@phosphor-icons/react';
 import Button from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import SpinLoader from '@/components/ui/SpinLoader';
 import { cn } from '@/lib/utils';
 import useTitle from '@/hooks/useTitle';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/context/toast-context';
+import type { ApiError } from '@/types/auth';
 
 const SignUp = () => {
   useTitle("Inscription");
+  const navigate = useNavigate();
+  const { success, error: showError } = useToast();
+  const { isAuthenticated, login } = useAuth();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -16,7 +28,7 @@ const SignUp = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'student',
+    role: 'student' as 'student' | 'instructor',
     acceptTerms: false
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -92,10 +104,30 @@ const SignUp = () => {
     setLoading(true);
     
     try {
-      // TODO: Implement API call
-      console.log('SignUp data:', formData);
+      // D'abord créer le compte
+      const { AuthService } = await import('@/services/authService');
+      await AuthService.register({
+        email: formData.email,
+        password: formData.password,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        role: formData.role
+      });
+      
+      success('Inscription réussie', 'Votre compte a été créé avec succès!');
+      navigate('/dashboard');
     } catch (error) {
-      console.error('SignUp error:', error);
+      const apiError = error as ApiError;
+      showError('Erreur d\'inscription', apiError.message);
+      
+      // Afficher les erreurs de validation si présentes
+      if (apiError.statusCode === 400) {
+        if (apiError.message.includes('email')) {
+          setErrors({ email: 'Cette adresse email est déjà utilisée' });
+        } else {
+          setErrors({ general: apiError.message });
+        }
+      }
     } finally {
       setLoading(false);
     }
@@ -120,6 +152,11 @@ const SignUp = () => {
         </div>
         
         <div className="bg-white shadow-md rounded-lg border border-gray-200 p-8">
+          {errors.general && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-600">{errors.general}</p>
+            </div>
+          )}
           <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             {/* First Name & Last Name */}

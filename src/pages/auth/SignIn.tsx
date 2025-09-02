@@ -1,14 +1,26 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeSlash } from '@phosphor-icons/react';
 import Button from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import SpinLoader from '@/components/ui/SpinLoader';
 import { cn } from '@/lib/utils';
 import useTitle from '@/hooks/useTitle';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/context/toast-context';
+import type { ApiError } from '@/types/auth';
 
 const SignIn = () => {
   useTitle("Connexion");
+  const navigate = useNavigate();
+  const { success, error: showError } = useToast();
+  const { isAuthenticated, login } = useAuth();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
   
   const [formData, setFormData] = useState({
     email: '',
@@ -17,6 +29,7 @@ const SignIn = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -24,17 +37,56 @@ const SignIn = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors: { [key: string]: string } = {};
+    
+    if (!formData.email.trim()) {
+      newErrors.email = 'L\'email est requis';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'L\'email n\'est pas valide';
+    }
+    
+    if (!formData.password) {
+      newErrors.password = 'Le mot de passe est requis';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validation côté client
+    if (!validateForm()) {
+      return;
+    }
+    
     setLoading(true);
+    setErrors({});
     
     try {
-      // TODO: Implement API call
-      console.log('SignIn data:', formData);
+      await login(formData.email, formData.password);
+      success('Connexion réussie', 'Vous êtes maintenant connecté!');
+      navigate('/dashboard');
     } catch (error) {
-      console.error('SignIn error:', error);
+      const apiError = error as ApiError;
+      showError('Erreur de connexion', apiError.message);
+      
+      // Afficher les erreurs de validation si présentes
+      if (apiError.statusCode === 400) {
+        setErrors({ general: apiError.message });
+      }
     } finally {
       setLoading(false);
     }
@@ -59,6 +111,11 @@ const SignIn = () => {
         </div>
         
         <div className="bg-white shadow-md rounded-lg border border-gray-200 p-8">
+          {errors.general && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-600">{errors.general}</p>
+            </div>
+          )}
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-4">
               <Input
@@ -71,6 +128,7 @@ const SignIn = () => {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="votre@email.com"
+                error={errors.email}
                 className="focus:ring-blue-500 focus:border-blue-500"
               />
               
@@ -88,6 +146,7 @@ const SignIn = () => {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="Votre mot de passe"
+                    error={errors.password}
                     className="focus:ring-blue-500 focus:border-blue-500 pr-10"
                   />
                   <button
