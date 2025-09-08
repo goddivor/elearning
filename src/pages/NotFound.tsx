@@ -54,7 +54,7 @@ const NotFound: React.FC = () => {
           <Button
             onClick={() => window.history.back()}
             className={cn(
-              "inline-flex items-center space-x-2 border border-blue-600 text-blue-600 px-6 py-3 rounded-md font-medium hover:bg-gray-50 transition-all"
+              "inline-flex items-center space-x-2 border border-blue-600 text-white px-6 py-3 rounded-md font-medium hover:bg-gray-50 hover:text-blue-600 transition-all"
             )}
           >
             <span>Retour en arrière</span>

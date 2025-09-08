@@ -12,10 +12,56 @@ import {
   Video,
   Note,
   Teacher,
-  Profile2User
+  Profile2User,
+  UserAdd
 } from 'iconsax-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+
+interface SidebarItem {
+  title: string;
+  href: string;
+  icon: React.ComponentType<{
+    size?: number;
+    color?: string;
+    variant?: "Linear" | "Outline" | "Broken" | "Bold" | "Bulk" | "TwoTone";
+  }>;
+  badge?: number;
+}
+
+function SidebarNavItem({ item }: { item: SidebarItem }) {
+  const { pathname } = useLocation();
+  // Fix for dashboard route conflicts
+  const isActive = pathname === item.href || 
+    (item.href !== '/dashboard/admin' && pathname.startsWith(`${item.href}/`));
+  const Icon = item.icon;
+
+  return (
+    <Link
+      to={item.href}
+      className={cn(
+        "flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors",
+        isActive
+          ? "bg-blue-50 text-blue-700 border-r-2 border-blue-700"
+          : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+      )}
+    >
+      <div className="flex items-center space-x-3">
+        <Icon
+          size={20}
+          color={isActive ? "#1D4ED8" : "#6B7280"}
+          variant={isActive ? "Bold" : "Outline"}
+        />
+        <span>{item.title}</span>
+      </div>
+      {item.badge && (
+        <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-600 rounded-full">
+          {item.badge}
+        </span>
+      )}
+    </Link>
+  );
+}
 
 const Sidebar = () => {
   const location = useLocation();
@@ -23,34 +69,34 @@ const Sidebar = () => {
   
   const userRole = user?.role || 'student';
 
-  const getMenuItems = () => {
+  const getMenuItems = (): SidebarItem[] => {
     switch (userRole) {
       case 'admin':
         return [
           {
             title: 'Dashboard',
             icon: Category,
-            path: '/admin/dashboard'
+            href: '/dashboard/admin'
           },
           {
-            title: 'Utilisateurs',
+            title: 'Gestion Utilisateurs',
             icon: People,
-            path: '/admin/users'
+            href: '/dashboard/admin/users'
           },
           {
-            title: 'Cours',
+            title: 'Gestion des Cours',
             icon: Book1,
-            path: '/admin/courses'
+            href: '/dashboard/admin/courses'
           },
           {
             title: 'Statistiques',
             icon: Chart,
-            path: '/admin/stats'
+            href: '/dashboard/admin/stats'
           },
           {
-            title: 'Paramètres',
+            title: 'Paramètres Système',
             icon: Setting2,
-            path: '/admin/settings'
+            href: '/dashboard/admin/settings'
           }
         ];
       
@@ -59,32 +105,32 @@ const Sidebar = () => {
           {
             title: 'Dashboard',
             icon: Category,
-            path: '/instructor/dashboard'
+            href: '/instructor/dashboard'
           },
           {
             title: 'Mes Cours',
             icon: Book1,
-            path: '/instructor/courses'
+            href: '/instructor/courses'
           },
           {
             title: 'Créer un Cours',
             icon: Note,
-            path: '/instructor/create-course'
+            href: '/instructor/create-course'
           },
           {
             title: 'Étudiants',
             icon: Profile2User,
-            path: '/instructor/students'
+            href: '/instructor/students'
           },
           {
             title: 'Analyses',
             icon: Chart,
-            path: '/instructor/analytics'
+            href: '/instructor/analytics'
           },
           {
             title: 'Mon Profil',
             icon: Teacher,
-            path: '/instructor/profile'
+            href: '/instructor/profile'
           }
         ];
       
@@ -94,32 +140,32 @@ const Sidebar = () => {
           {
             title: 'Dashboard',
             icon: Category,
-            path: '/student/dashboard'
+            href: '/student/dashboard'
           },
           {
             title: 'Mes Cours',
             icon: BookSaved,
-            path: '/student/courses'
+            href: '/student/courses'
           },
           {
             title: 'Parcourir',
             icon: Book1,
-            path: '/student/browse'
+            href: '/student/browse'
           },
           {
             title: 'Progression',
             icon: Chart,
-            path: '/student/progress'
+            href: '/student/progress'
           },
           {
             title: 'Certificats',
             icon: Medal,
-            path: '/student/certificates'
+            href: '/student/certificates'
           },
           {
             title: 'Mon Profil',
             icon: User,
-            path: '/student/profile'
+            href: '/student/profile'
           }
         ];
     }
@@ -130,31 +176,23 @@ const Sidebar = () => {
   return (
     <aside className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200 overflow-y-auto">
       <div className="p-4">
+        {/* Section Header */}
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-gray-900">
+            {userRole === 'admin' ? 'Administration' : 
+             userRole === 'instructor' ? 'Instructeur' : 'Étudiant'}
+          </h2>
+          <p className="text-sm text-gray-500">
+            {userRole === 'admin' ? 'Gestion de la plateforme' : 
+             userRole === 'instructor' ? 'Gestion des cours' : 'Mon apprentissage'}
+          </p>
+        </div>
+
         {/* Navigation Menu */}
-        <nav className="space-y-2">
-          {menuItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            const Icon = item.icon;
-            
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={cn(
-                  "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                  isActive 
-                    ? "bg-blue-100 text-blue-700" 
-                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                )}
-              >
-                <Icon 
-                  size={20} 
-                  className={isActive ? "text-blue-700" : "text-gray-400"}
-                />
-                <span>{item.title}</span>
-              </Link>
-            );
-          })}
+        <nav className="space-y-1">
+          {menuItems.map((item) => (
+            <SidebarNavItem key={item.href} item={item} />
+          ))}
         </nav>
       </div>
 

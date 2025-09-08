@@ -8,6 +8,8 @@ import SignIn from "./auth/SignIn";
 import SignUp from "./auth/SignUp";
 import ForgotPassword from "./auth/ForgotPassword";
 import AdminDashboard from "./admin/Dashboard";
+import AdminUsers from "./admin/Users";
+import AdminCourses from "./admin/Courses";
 import InstructorDashboard from "./instructor/Dashboard";
 import StudentDashboard from "./student/Dashboard";
 
@@ -41,6 +43,8 @@ const router = createBrowserRouter([
       // Redirection selon le rôle utilisateur
       { path: "", element: <RoleBasedRedirect /> },
       { path: "admin", element: <AdminDashboard /> },
+      { path: "admin/users", element: <AdminUsers /> },
+      { path: "admin/courses", element: <AdminCourses /> },
       { path: "instructor", element: <InstructorDashboard /> },
       { path: "student", element: <StudentDashboard /> },
     ],
