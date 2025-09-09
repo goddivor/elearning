@@ -10,8 +10,6 @@ import {
   BookSaved,
   Medal,
   Video,
-  Note,
-  Teacher,
   Profile2User,
   UserAdd
 } from 'iconsax-react';
@@ -64,7 +62,6 @@ function SidebarNavItem({ item }: { item: SidebarItem }) {
 }
 
 const Sidebar = () => {
-  const location = useLocation();
   const { user } = useAuth();
   
   const userRole = user?.role || 'student';
@@ -105,32 +102,37 @@ const Sidebar = () => {
           {
             title: 'Dashboard',
             icon: Category,
-            href: '/instructor/dashboard'
+            href: '/dashboard/instructor'
           },
           {
             title: 'Mes Cours',
             icon: Book1,
-            href: '/instructor/courses'
+            href: '/dashboard/instructor/courses'
           },
           {
             title: 'Créer un Cours',
-            icon: Note,
-            href: '/instructor/create-course'
+            icon: UserAdd,
+            href: '/dashboard/instructor/create-course'
           },
           {
-            title: 'Étudiants',
+            title: 'Mes Étudiants',
             icon: Profile2User,
-            href: '/instructor/students'
+            href: '/dashboard/instructor/students'
           },
           {
-            title: 'Analyses',
+            title: 'Bibliothèque',
+            icon: Video,
+            href: '/dashboard/instructor/library'
+          },
+          {
+            title: 'Analytics',
             icon: Chart,
-            href: '/instructor/analytics'
+            href: '/dashboard/instructor/analytics'
           },
           {
-            title: 'Mon Profil',
-            icon: Teacher,
-            href: '/instructor/profile'
+            title: 'Paramètres',
+            icon: Setting2,
+            href: '/dashboard/instructor/settings'
           }
         ];
       
