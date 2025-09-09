@@ -1,4 +1,5 @@
 import api from './api';
+import type { LocalImage } from '@/components/ui/ImageUpload';
 
 export interface Course {
   id: string;
@@ -15,6 +16,8 @@ export interface Course {
     email: string;
   };
   thumbnailUrl?: string;
+  thumbnailPreview?: string;
+  localThumbnail?: LocalImage | null;
   previewUrl?: string;
   tags: string[];
   duration: number; // en minutes
@@ -178,4 +181,3 @@ class CourseService {
 
 export const courseService = new CourseService();
 export default courseService;
-export type { Course, CourseStats, CreateCourseDto, UpdateCourseDto };
