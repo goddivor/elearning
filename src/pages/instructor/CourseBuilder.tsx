@@ -56,11 +56,64 @@ interface Lesson {
     quizData?: {
       questions: Array<{
         id: string;
-        type: string;
+        type: 'multiple' | 'checkbox' | 'text' | 'fill-blanks' | 'ordering' | 'drag-drop' | 'audio';
         question: string;
         options: string[];
-        correctAnswer: number | number[]; // Support both single and multiple correct answers
+        correctAnswer: number | number[] | string | string[]; // Support different answer formats
         explanation: string;
+        
+        // Pour les questions avec images
+        questionImage?: {
+          file?: File;
+          localUrl?: string;
+          uploadedUrl?: string;
+          name?: string;
+        };
+        
+        // Pour le code syntax highlighting
+        codeSnippet?: {
+          code: string;
+          language: string;
+        };
+        
+        // Données spécifiques aux nouveaux types
+        fillBlanksData?: {
+          textWithBlanks: string;
+          blanks: Array<{
+            id: string;
+            correctAnswers: string[];
+            caseSensitive: boolean;
+          }>;
+        };
+        
+        orderingData?: {
+          items: Array<{
+            id: string;
+            text: string;
+            correctPosition: number;
+          }>;
+        };
+        
+        dragDropData?: {
+          zones: Array<{
+            id: string;
+            label: string;
+            acceptedItems: string[];
+          }>;
+          items: Array<{
+            id: string;
+            text: string;
+            correctZoneId: string;
+          }>;
+        };
+        
+        audioData?: {
+          audioFile?: File;
+          localAudioUrl?: string;
+          uploadedAudioUrl?: string;
+          audioName?: string;
+          duration?: number;
+        };
       }>;
     };
     assignmentData?: {

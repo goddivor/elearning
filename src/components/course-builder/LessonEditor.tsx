@@ -53,11 +53,67 @@ interface QuizData {
 
 interface QuizQuestion {
   id: string;
-  type: string;
+  type: 'multiple' | 'checkbox' | 'text' | 'fill-blanks' | 'ordering' | 'drag-drop' | 'audio';
   question: string;
   options: string[];
-  correctAnswer: number | number[]; // Support both single and multiple correct answers
+  correctAnswer: number | number[] | string | string[]; // Support different answer formats
   explanation: string;
+  
+  // Pour les questions avec images
+  questionImage?: {
+    file?: File;
+    localUrl?: string;
+    uploadedUrl?: string;
+    name?: string;
+  };
+  
+  // Pour le code syntax highlighting
+  codeSnippet?: {
+    code: string;
+    language: string; // 'javascript', 'python', 'java', 'css', etc.
+  };
+  
+  // Spécifique au "Texte à trous"
+  fillBlanksData?: {
+    textWithBlanks: string; // Texte avec [blank] comme marqueurs
+    blanks: Array<{
+      id: string;
+      correctAnswers: string[]; // Réponses acceptées pour ce blanc
+      caseSensitive: boolean;
+    }>;
+  };
+  
+  // Spécifique au "Classement / Ordonnancement"
+  orderingData?: {
+    items: Array<{
+      id: string;
+      text: string;
+      correctPosition: number; // Position correcte (0-indexed)
+    }>;
+  };
+  
+  // Spécifique au "Glisser-déposer"
+  dragDropData?: {
+    zones: Array<{
+      id: string;
+      label: string;
+      acceptedItems: string[]; // IDs des items qui peuvent être déposés ici
+    }>;
+    items: Array<{
+      id: string;
+      text: string;
+      correctZoneId: string;
+    }>;
+  };
+  
+  // Spécifique au quiz audio
+  audioData?: {
+    audioFile?: File;
+    localAudioUrl?: string;
+    uploadedAudioUrl?: string;
+    audioName?: string;
+    duration?: number;
+  };
 }
 
 interface AssignmentData {
@@ -516,6 +572,301 @@ const VideoEditor = ({ lesson, onChange }: EditorProps) => {
 };
 
 
+// Fonction pour rendre le contenu spécifique de chaque type de question
+const renderQuestionContent = (question: QuizQuestion, updateQuestion: (questionId: string, field: string, value: unknown) => void) => {
+  switch (question.type) {
+    case 'fill-blanks':
+      return (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Texte avec espaces à compléter *
+            </label>
+            <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+              <p className="text-xs text-gray-600 mb-2">
+                Utilisez <code className="bg-white px-1 rounded">[blank]</code> pour marquer les espaces à compléter
+              </p>
+              <textarea
+                value={question.fillBlanksData?.textWithBlanks || ''}
+                onChange={(e) => updateQuestion(question.id, 'fillBlanksData', {
+                  ...question.fillBlanksData,
+                  textWithBlanks: e.target.value
+                })}
+                placeholder="Ex: La capitale de la France est [blank] et elle est située sur la [blank]."
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+              />
+            </div>
+          </div>
+          
+          {/* Configuration des réponses pour chaque blank */}
+          {question.fillBlanksData?.textWithBlanks?.match(/\[blank\]/g) && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Réponses acceptées pour chaque espace
+              </label>
+              <div className="space-y-3">
+                {question.fillBlanksData.textWithBlanks.match(/\[blank\]/g)?.map((_, blankIndex) => (
+                  <div key={blankIndex} className="border border-gray-200 rounded-lg p-3">
+                    <h5 className="font-medium text-sm mb-2">Espace {blankIndex + 1}</h5>
+                    <input
+                      type="text"
+                      placeholder="Réponses séparées par des virgules (ex: Paris, paris, PARIS)"
+                      value={question.fillBlanksData?.blanks?.[blankIndex]?.correctAnswers?.join(', ') || ''}
+                      onChange={(e) => {
+                        const answers = e.target.value.split(',').map(a => a.trim()).filter(a => a);
+                        const updatedBlanks = [...(question.fillBlanksData?.blanks || [])];
+                        updatedBlanks[blankIndex] = {
+                          id: `blank-${blankIndex}`,
+                          correctAnswers: answers,
+                          caseSensitive: updatedBlanks[blankIndex]?.caseSensitive || false
+                        };
+                        updateQuestion(question.id, 'fillBlanksData', {
+                          ...question.fillBlanksData,
+                          blanks: updatedBlanks
+                        });
+                      }}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                    />
+                    <label className="flex items-center mt-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={question.fillBlanksData?.blanks?.[blankIndex]?.caseSensitive || false}
+                        onChange={(e) => {
+                          const updatedBlanks = [...(question.fillBlanksData?.blanks || [])];
+                          updatedBlanks[blankIndex] = {
+                            ...updatedBlanks[blankIndex],
+                            id: `blank-${blankIndex}`,
+                            correctAnswers: updatedBlanks[blankIndex]?.correctAnswers || [],
+                            caseSensitive: e.target.checked
+                          };
+                          updateQuestion(question.id, 'fillBlanksData', {
+                            ...question.fillBlanksData,
+                            blanks: updatedBlanks
+                          });
+                        }}
+                        className="mr-2 text-purple-600 focus:ring-purple-500"
+                      />
+                      Sensible à la casse
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+
+    case 'ordering':
+      return (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Éléments à classer dans l'ordre *
+            </label>
+            <p className="text-xs text-gray-600 mb-3">
+              Les étudiants devront remettre ces éléments dans le bon ordre
+            </p>
+            <div className="space-y-2">
+              {question.orderingData?.items?.map((item, index) => (
+                <div key={item.id} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg">
+                  <div className="flex items-center justify-center w-8 h-8 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+                    {index + 1}
+                  </div>
+                  <input
+                    type="text"
+                    value={item.text}
+                    onChange={(e) => {
+                      const updatedItems = [...(question.orderingData?.items || [])];
+                      updatedItems[index] = { ...item, text: e.target.value };
+                      updateQuestion(question.id, 'orderingData', {
+                        ...question.orderingData,
+                        items: updatedItems
+                      });
+                    }}
+                    placeholder={`Élément ${index + 1}`}
+                    className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                  />
+                  <button
+                    onClick={() => {
+                      const updatedItems = question.orderingData?.items?.filter((_, i) => i !== index) || [];
+                      updateQuestion(question.id, 'orderingData', {
+                        ...question.orderingData,
+                        items: updatedItems.map((item, i) => ({ ...item, correctPosition: i }))
+                      });
+                    }}
+                    className="text-red-600 hover:text-red-700 p-1"
+                  >
+                    <Trash color="#EF4444" size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => {
+                const currentItems = question.orderingData?.items || [];
+                const newItem = {
+                  id: `item-${Date.now()}`,
+                  text: '',
+                  correctPosition: currentItems.length
+                };
+                updateQuestion(question.id, 'orderingData', {
+                  ...question.orderingData,
+                  items: [...currentItems, newItem]
+                });
+              }}
+              className="mt-2 px-4 py-2 text-sm border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-purple-300 hover:text-purple-600 transition-colors"
+            >
+              + Ajouter un élément
+            </button>
+          </div>
+        </div>
+      );
+
+    case 'drag-drop':
+      return (
+        <div className="space-y-4">
+          {/* Zones de dépôt */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Zones de dépôt
+            </label>
+            <div className="space-y-2">
+              {question.dragDropData?.zones?.map((zone, index) => (
+                <div key={zone.id} className="flex items-center space-x-3 p-3 border-2 border-dashed border-blue-200 rounded-lg bg-blue-50">
+                  <div className="text-blue-600 font-medium text-sm">Zone {index + 1}:</div>
+                  <input
+                    type="text"
+                    value={zone.label}
+                    onChange={(e) => {
+                      const updatedZones = [...(question.dragDropData?.zones || [])];
+                      updatedZones[index] = { ...zone, label: e.target.value };
+                      updateQuestion(question.id, 'dragDropData', {
+                        ...question.dragDropData,
+                        zones: updatedZones
+                      });
+                    }}
+                    placeholder="Nom de la zone"
+                    className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Éléments à glisser */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Éléments à glisser-déposer
+            </label>
+            <div className="space-y-2">
+              {question.dragDropData?.items?.map((item, index) => (
+                <div key={item.id} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg">
+                  <input
+                    type="text"
+                    value={item.text}
+                    onChange={(e) => {
+                      const updatedItems = [...(question.dragDropData?.items || [])];
+                      updatedItems[index] = { ...item, text: e.target.value };
+                      updateQuestion(question.id, 'dragDropData', {
+                        ...question.dragDropData,
+                        items: updatedItems
+                      });
+                    }}
+                    placeholder="Texte de l'élément"
+                    className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                  />
+                  <select
+                    value={item.correctZoneId || ''}
+                    onChange={(e) => {
+                      const updatedItems = [...(question.dragDropData?.items || [])];
+                      updatedItems[index] = { ...item, correctZoneId: e.target.value };
+                      updateQuestion(question.id, 'dragDropData', {
+                        ...question.dragDropData,
+                        items: updatedItems
+                      });
+                    }}
+                    className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                  >
+                    <option value="">Sélectionner la zone correcte</option>
+                    {question.dragDropData?.zones?.map((zone) => (
+                      <option key={zone.id} value={zone.id}>
+                        {zone.label || `Zone ${(question.dragDropData?.zones?.indexOf(zone) ?? -1) + 1}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+
+    case 'audio':
+      return (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Fichier audio de la question *
+            </label>
+            <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center">
+              {question.audioData?.localAudioUrl ? (
+                <div className="space-y-3">
+                  <audio 
+                    controls 
+                    src={question.audioData.localAudioUrl}
+                    className="mx-auto"
+                  >
+                    Votre navigateur ne supporte pas l'élément audio.
+                  </audio>
+                  <p className="text-sm text-gray-600">
+                    {question.audioData.audioName}
+                  </p>
+                  <button
+                    onClick={() => {
+                      if (question.audioData?.localAudioUrl) {
+                        URL.revokeObjectURL(question.audioData.localAudioUrl);
+                      }
+                      updateQuestion(question.id, 'audioData', undefined);
+                    }}
+                    className="px-4 py-2 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50"
+                  >
+                    Supprimer l'audio
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <input
+                    type="file"
+                    accept=".wav,.mp3,.m4a,.ogg"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const localUrl = URL.createObjectURL(file);
+                        updateQuestion(question.id, 'audioData', {
+                          audioFile: file,
+                          localAudioUrl: localUrl,
+                          audioName: file.name
+                        });
+                      }
+                    }}
+                    className="mb-3"
+                  />
+                  <p className="text-sm text-gray-500">
+                    Formats supportés: WAV, MP3, M4A, OGG
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+
+    default:
+      return null;
+  }
+};
+
 const QuizEditor = ({ lesson, onChange }: EditorProps) => {
   const quizData = lesson.content.quizData || { questions: [] };
   
@@ -549,7 +900,7 @@ const QuizEditor = ({ lesson, onChange }: EditorProps) => {
         if (q.id === questionId) {
           const updatedQuestion = { ...q, [field]: value };
           
-          // Handle type change to update correctAnswer format
+          // Handle type change to update correctAnswer format and initialize type-specific data
           if (field === 'type') {
             if (value === 'checkbox') {
               // Convert to array format for multiple choice
@@ -561,6 +912,47 @@ const QuizEditor = ({ lesson, onChange }: EditorProps) => {
               updatedQuestion.correctAnswer = Array.isArray(q.correctAnswer) 
                 ? (q.correctAnswer[0] ?? 0)
                 : q.correctAnswer;
+            } else if (value === 'fill-blanks') {
+              // Initialize fill-blanks data
+              updatedQuestion.fillBlanksData = {
+                textWithBlanks: '',
+                blanks: []
+              };
+              updatedQuestion.correctAnswer = '';
+            } else if (value === 'ordering') {
+              // Initialize ordering data
+              updatedQuestion.orderingData = {
+                items: [
+                  { id: `item-${Date.now()}`, text: '', correctPosition: 0 },
+                  { id: `item-${Date.now() + 1}`, text: '', correctPosition: 1 }
+                ]
+              };
+              updatedQuestion.correctAnswer = [];
+            } else if (value === 'drag-drop') {
+              // Initialize drag-drop data
+              updatedQuestion.dragDropData = {
+                zones: [
+                  { id: `zone-${Date.now()}`, label: '', acceptedItems: [] },
+                  { id: `zone-${Date.now() + 1}`, label: '', acceptedItems: [] }
+                ],
+                items: [
+                  { id: `item-${Date.now()}`, text: '', correctZoneId: '' }
+                ]
+              };
+              updatedQuestion.correctAnswer = [];
+            } else if (value === 'audio') {
+              // Initialize audio data
+              updatedQuestion.audioData = {
+                audioFile: undefined,
+                localAudioUrl: '',
+                uploadedAudioUrl: '',
+                audioName: '',
+                duration: 0
+              };
+              updatedQuestion.correctAnswer = '';
+            } else if (value === 'text') {
+              // For free text, just use string
+              updatedQuestion.correctAnswer = '';
             }
           }
           
@@ -591,7 +983,9 @@ const QuizEditor = ({ lesson, onChange }: EditorProps) => {
 
     if (question.type === 'checkbox') {
       // For multiple choice, toggle the option in the array
-      const currentAnswers = Array.isArray(question.correctAnswer) ? question.correctAnswer : [];
+      const currentAnswers = Array.isArray(question.correctAnswer) 
+        ? (question.correctAnswer.filter(item => typeof item === 'number') as number[])
+        : [];
       const newAnswers = currentAnswers.includes(optionIndex)
         ? currentAnswers.filter(index => index !== optionIndex)
         : [...currentAnswers, optionIndex];
@@ -624,9 +1018,9 @@ const QuizEditor = ({ lesson, onChange }: EditorProps) => {
           
           // Update correct answers when removing options
           if (q.type === 'checkbox' && Array.isArray(q.correctAnswer)) {
-            newCorrectAnswer = q.correctAnswer
-              .map(idx => idx > optionIndex ? idx - 1 : idx)
-              .filter(idx => idx !== optionIndex);
+            newCorrectAnswer = (q.correctAnswer as number[])
+              .map(idx => typeof idx === 'number' && idx > optionIndex ? idx - 1 : idx)
+              .filter(idx => typeof idx === 'number' && idx !== optionIndex) as number[];
           } else if (typeof q.correctAnswer === 'number') {
             if (q.correctAnswer === optionIndex) {
               newCorrectAnswer = 0; // Reset to first option if removed option was correct
@@ -644,10 +1038,14 @@ const QuizEditor = ({ lesson, onChange }: EditorProps) => {
 
   const isOptionCorrect = (question: QuizQuestion, optionIndex: number) => {
     if (question.type === 'checkbox') {
-      return Array.isArray(question.correctAnswer) && question.correctAnswer.includes(optionIndex);
-    } else {
-      return question.correctAnswer === optionIndex;
+      return Array.isArray(question.correctAnswer) && 
+             question.correctAnswer.some(answer => 
+               typeof answer === 'number' && answer === optionIndex
+             );
+    } else if (question.type === 'multiple') {
+      return typeof question.correctAnswer === 'number' && question.correctAnswer === optionIndex;
     }
+    return false;
   };
 
   return (
@@ -695,6 +1093,10 @@ const QuizEditor = ({ lesson, onChange }: EditorProps) => {
                         <option value="multiple">QCM (choix unique)</option>
                         <option value="checkbox">QCM (choix multiple)</option>
                         <option value="text">Réponse libre</option>
+                        <option value="fill-blanks">Texte à trous</option>
+                        <option value="ordering">Classement / Ordonnancement</option>
+                        <option value="drag-drop">Glisser-déposer</option>
+                        <option value="audio">Quiz oral / audio</option>
                       </select>
                     </div>
                   </div>
@@ -721,7 +1123,155 @@ const QuizEditor = ({ lesson, onChange }: EditorProps) => {
                   />
                 </div>
                 
-                {question.type !== 'text' && (
+                {/* Support d'image pour la question */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Image de la question (optionnel)
+                  </label>
+                  <div className="border-2 border-dashed border-gray-200 rounded-lg p-4">
+                    {question.questionImage?.localUrl ? (
+                      <div className="space-y-3">
+                        <img 
+                          src={question.questionImage.localUrl} 
+                          alt="Question" 
+                          className="max-w-full max-h-48 object-contain mx-auto border border-gray-200 rounded"
+                        />
+                        <p className="text-sm text-gray-600 text-center">
+                          {question.questionImage.name}
+                        </p>
+                        <div className="flex justify-center">
+                          <button
+                            onClick={() => {
+                              if (question.questionImage?.localUrl) {
+                                URL.revokeObjectURL(question.questionImage.localUrl);
+                              }
+                              updateQuestion(question.id, 'questionImage', undefined);
+                            }}
+                            className="px-4 py-2 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50"
+                          >
+                            Supprimer l'image
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const localUrl = URL.createObjectURL(file);
+                              updateQuestion(question.id, 'questionImage', {
+                                file,
+                                localUrl,
+                                name: file.name
+                              });
+                            }
+                          }}
+                          className="mb-2"
+                        />
+                        <p className="text-sm text-gray-500">
+                          Formats supportés: JPG, PNG, GIF, WEBP
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Support de code pour la question */}
+                <div>
+                  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+                    <input
+                      type="checkbox"
+                      checked={!!question.codeSnippet}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          updateQuestion(question.id, 'codeSnippet', {
+                            code: '',
+                            language: 'javascript'
+                          });
+                        } else {
+                          updateQuestion(question.id, 'codeSnippet', undefined);
+                        }
+                      }}
+                      className="text-purple-600 focus:ring-purple-500"
+                    />
+                    <span>Inclure du code dans la question</span>
+                  </label>
+                  
+                  {question.codeSnippet && (
+                    <div className="space-y-3 border border-gray-200 rounded-lg p-4 bg-gray-50">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Langage de programmation
+                        </label>
+                        <select
+                          value={question.codeSnippet.language}
+                          onChange={(e) => updateQuestion(question.id, 'codeSnippet', {
+                            ...question.codeSnippet,
+                            language: e.target.value
+                          })}
+                          className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                        >
+                          <option value="javascript">JavaScript</option>
+                          <option value="python">Python</option>
+                          <option value="java">Java</option>
+                          <option value="cpp">C++</option>
+                          <option value="csharp">C#</option>
+                          <option value="php">PHP</option>
+                          <option value="html">HTML</option>
+                          <option value="css">CSS</option>
+                          <option value="sql">SQL</option>
+                          <option value="json">JSON</option>
+                          <option value="xml">XML</option>
+                          <option value="bash">Bash</option>
+                          <option value="typescript">TypeScript</option>
+                          <option value="ruby">Ruby</option>
+                          <option value="go">Go</option>
+                          <option value="rust">Rust</option>
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Code
+                        </label>
+                        <textarea
+                          value={question.codeSnippet.code}
+                          onChange={(e) => updateQuestion(question.id, 'codeSnippet', {
+                            ...question.codeSnippet,
+                            code: e.target.value
+                          })}
+                          placeholder="Saisissez votre code ici..."
+                          rows={8}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm font-mono bg-white"
+                          style={{ fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace' }}
+                        />
+                      </div>
+                      
+                      <div className="bg-white border border-gray-300 rounded-lg p-3">
+                        <p className="text-sm text-gray-600 mb-2">Aperçu du code:</p>
+                        <pre className="bg-gray-900 text-gray-100 p-3 rounded text-sm overflow-x-auto">
+                          <code className={`language-${question.codeSnippet.language}`}>
+                            {question.codeSnippet.code || '// Votre code apparaîtra ici'}
+                          </code>
+                        </pre>
+                      </div>
+                      
+                      <p className="text-xs text-gray-500">
+                        Le code sera affiché avec coloration syntaxique aux étudiants. 
+                        Vous pouvez poser des questions sur ce code (ex: "Que retourne cette fonction?", "Quelle sera la valeur de x?", etc.).
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Contenu spécifique par type de question */}
+                {renderQuestionContent(question, updateQuestion)}
+
+                {/* Options pour QCM (choix unique et multiple) */}
+                {(question.type === 'multiple' || question.type === 'checkbox') && (
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <label className="block text-sm font-medium text-gray-700">
