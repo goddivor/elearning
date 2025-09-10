@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Video, 
   DocumentText, 
@@ -11,17 +11,13 @@ import {
   Save2,
   Eye,
   Edit,
-  TextBold,
-  TextItalic,
-  TextUnderline,
-  More,
-  Category,
   Play
 } from 'iconsax-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
 import DocumentUpload, { type LocalFile, type UploadedFile } from '@/components/ui/DocumentUpload';
+import RichTextEditor, { type LocalImage } from '@/components/ui/RichTextEditor';
 import { toast } from 'react-hot-toast';
 import { mediaService } from '@/services/mediaService';
 
@@ -40,6 +36,7 @@ interface Lesson {
     documentName?: string;
     documentType?: string;
     localDocument?: LocalFile; // Fichier local en attente d'upload
+    localImages?: LocalImage[]; // Images locales en attente d'upload (pour RichTextEditor)
     model3dUrl?: string;
     model3dName?: string;
     quizData?: QuizData;
@@ -186,7 +183,14 @@ const LessonEditor = ({ lesson, onUpdateLesson }: Props) => {
       case 'video':
         return <VideoEditor lesson={editedLesson} onChange={handleContentChange} />;
       case 'text':
-        return <TextEditor lesson={editedLesson} onChange={handleContentChange} />;
+        return <RichTextEditor 
+          value={editedLesson.content.textContent || ''}
+          onChange={(content) => handleContentChange('textContent', content)}
+          onLocalImagesChange={(localImages) => handleContentChange('localImages', localImages)}
+          localImages={editedLesson.content.localImages || []}
+          placeholder="Rédigez votre contenu d'article..."
+          label="Contenu de l'article"
+        />;
       case 'quiz':
         return <QuizEditor lesson={editedLesson} onChange={handleContentChange} />;
       case '3d':
@@ -511,186 +515,6 @@ const VideoEditor = ({ lesson, onChange }: EditorProps) => {
   );
 };
 
-const TextEditor = ({ lesson, onChange }: EditorProps) => {
-  const [isPreview, setIsPreview] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-
-  const insertText = (before: string, after: string = '') => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const currentText = lesson.content.textContent || '';
-    const selectedText = currentText.substring(start, end);
-    
-    const newText = currentText.substring(0, start) + before + selectedText + after + currentText.substring(end);
-    onChange('textContent', newText);
-    
-    // Restore cursor position
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + before.length, end + before.length);
-    }, 0);
-  };
-
-  const formatMarkdown = (text: string) => {
-    return text
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/__(.*?)__/g, '<u>$1</u>')
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-600 underline">$1</a>')
-      .replace(/^# (.*$)/gm, '<h1 class="text-2xl font-bold mb-4">$1</h1>')
-      .replace(/^## (.*$)/gm, '<h2 class="text-xl font-semibold mb-3">$1</h2>')
-      .replace(/^### (.*$)/gm, '<h3 class="text-lg font-medium mb-2">$1</h3>')
-      .replace(/^\* (.+)$/gm, '<li class="ml-4">• $1</li>')
-      .replace(/^\d+\. (.+)$/gm, '<li class="ml-4">$1</li>')
-      .replace(/\n\n/g, '</p><p class="mb-4">')
-      .replace(/\n/g, '<br>');
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <label className="block text-sm font-medium text-gray-700">
-          Contenu de l'article
-        </label>
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => setIsPreview(false)}
-            className={`px-3 py-1 text-sm rounded-md transition-colors ${
-              !isPreview ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            Éditer
-          </button>
-          <button
-            onClick={() => setIsPreview(true)}
-            className={`px-3 py-1 text-sm rounded-md transition-colors ${
-              isPreview ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            Aperçu
-          </button>
-        </div>
-      </div>
-
-      {!isPreview ? (
-        <div className="border border-gray-200 rounded-lg">
-          <div className="bg-gray-50 px-3 py-2 border-b border-gray-200 flex items-center space-x-2 flex-wrap">
-            <div className="flex items-center space-x-1">
-              <button 
-                onClick={() => insertText('**', '**')}
-                className="p-2 hover:bg-white rounded transition-colors"
-                title="Gras"
-              >
-                <TextBold color="#374151" size={16} />
-              </button>
-              <button 
-                onClick={() => insertText('*', '*')}
-                className="p-2 hover:bg-white rounded transition-colors"
-                title="Italique"
-              >
-                <TextItalic color="#374151" size={16} />
-              </button>
-              <button 
-                onClick={() => insertText('__', '__')}
-                className="p-2 hover:bg-white rounded transition-colors"
-                title="Souligné"
-              >
-                <TextUnderline color="#374151" size={16} />
-              </button>
-            </div>
-            
-            <div className="border-l border-gray-300 h-6"></div>
-            
-            <div className="flex items-center space-x-1">
-              <button 
-                onClick={() => insertText('# ', '')}
-                className="px-2 py-1 text-sm bg-white border border-gray-200 rounded hover:bg-gray-50"
-                title="Titre 1"
-              >
-                H1
-              </button>
-              <button 
-                onClick={() => insertText('## ', '')}
-                className="px-2 py-1 text-sm bg-white border border-gray-200 rounded hover:bg-gray-50"
-                title="Titre 2"
-              >
-                H2
-              </button>
-              <button 
-                onClick={() => insertText('### ', '')}
-                className="px-2 py-1 text-sm bg-white border border-gray-200 rounded hover:bg-gray-50"
-                title="Titre 3"
-              >
-                H3
-              </button>
-            </div>
-            
-            <div className="border-l border-gray-300 h-6"></div>
-            
-            <div className="flex items-center space-x-1">
-              <button 
-                onClick={() => insertText('* ', '')}
-                className="p-2 hover:bg-white rounded transition-colors"
-                title="Liste à puces"
-              >
-                <More color="#374151" size={16} />
-              </button>
-              <button 
-                onClick={() => insertText('1. ', '')}
-                className="p-2 hover:bg-white rounded transition-colors"
-                title="Liste numérotée"
-              >
-                <Category color="#374151" size={16} />
-              </button>
-            </div>
-            
-            <div className="border-l border-gray-300 h-6"></div>
-            
-            <button 
-              onClick={() => insertText('[texte du lien](', ')')}
-              className="px-2 py-1 text-sm bg-white border border-gray-200 rounded hover:bg-gray-50"
-              title="Insérer un lien"
-            >
-              Lien
-            </button>
-          </div>
-          <textarea
-            ref={textareaRef}
-            value={lesson.content.textContent || ''}
-            onChange={(e) => onChange('textContent', e.target.value)}
-            placeholder="Rédigez votre contenu ici... Utilisez Markdown pour le formatage."
-            rows={15}
-            className="w-full px-3 py-2 border-0 focus:outline-none focus:ring-0 resize-none font-mono text-sm"
-          />
-        </div>
-      ) : (
-        <div className="border border-gray-200 rounded-lg p-4 bg-white min-h-96">
-          <div 
-            className="prose prose-sm max-w-none"
-            dangerouslySetInnerHTML={{
-              __html: formatMarkdown(lesson.content.textContent || 'Aucun contenu à prévisualiser...')
-            }}
-          />
-        </div>
-      )}
-      
-      <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg">
-        <strong>Guide Markdown :</strong>
-        <div className="grid grid-cols-2 gap-2 mt-2">
-          <div>• <code>**gras**</code> pour <strong>gras</strong></div>
-          <div>• <code>*italique*</code> pour <em>italique</em></div>
-          <div>• <code>__souligné__</code> pour <u>souligné</u></div>
-          <div>• <code>[lien](url)</code> pour les liens</div>
-          <div>• <code># Titre 1</code> pour les titres</div>
-          <div>• <code>* Item</code> pour les listes</div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const QuizEditor = ({ lesson, onChange }: EditorProps) => {
   const quizData = lesson.content.quizData || { questions: [] };
@@ -1203,50 +1027,13 @@ const AssignmentEditor = ({ lesson, onChange }: EditorProps) => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Instructions détaillées
             </label>
-            <div className="border border-gray-200 rounded-lg">
-              <div className="bg-gray-50 px-3 py-2 border-b border-gray-200 flex items-center space-x-2">
-                <button 
-                  onClick={() => {
-                    const currentText = assignmentData.instructions || '';
-                    updateAssignmentData('instructions', currentText + '**texte en gras**');
-                  }}
-                  className="p-2 hover:bg-white rounded transition-colors"
-                  title="Gras"
-                >
-                  <TextBold color="#374151" size={16} />
-                </button>
-                <button 
-                  onClick={() => {
-                    const currentText = assignmentData.instructions || '';
-                    updateAssignmentData('instructions', currentText + '*texte en italique*');
-                  }}
-                  className="p-2 hover:bg-white rounded transition-colors"
-                  title="Italique"
-                >
-                  <TextItalic color="#374151" size={16} />
-                </button>
-                <button 
-                  onClick={() => {
-                    const currentText = assignmentData.instructions || '';
-                    updateAssignmentData('instructions', currentText + '\n* Point de liste');
-                  }}
-                  className="p-2 hover:bg-white rounded transition-colors"
-                  title="Liste"
-                >
-                  <More color="#374151" size={16} />
-                </button>
-              </div>
-              <textarea
-                value={assignmentData.instructions || ''}
-                onChange={(e) => updateAssignmentData('instructions', e.target.value)}
-                placeholder="Décrivez clairement ce que les étudiants doivent faire, les critères d'évaluation, les livrables attendus..."
-                rows={8}
-                className="w-full px-3 py-2 border-0 focus:outline-none focus:ring-0 resize-none"
-              />
-            </div>
-            <p className="text-xs text-gray-500 mt-2">
-              Support Markdown: **gras**, *italique*, [lien](url), * listes, etc.
-            </p>
+            <RichTextEditor
+              value={assignmentData.instructions || ''}
+              onChange={(content: string) => {
+                updateAssignmentData('instructions', content);
+              }}
+              placeholder="Décrivez clairement ce que les étudiants doivent faire, les critères d'évaluation, les livrables attendus..."
+            />
           </div>
         </div>
       )}

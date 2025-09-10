@@ -51,6 +51,7 @@ interface Lesson {
     documentName?: string;
     documentType?: string;
     localDocument?: LocalFile; // Fichier local en attente d'upload
+    localImages?: Array<{file: File; localUrl: string; id: string}>; // Images locales en attente d'upload (RichTextEditor)
     model3dUrl?: string;
     quizData?: {
       questions: Array<{
@@ -507,6 +508,34 @@ const CourseBuilder = () => {
               delete lesson.content.localDocument;
             });
           uploadsPromises.push(uploadPromise);
+        }
+        
+        // Upload des images locales du RichTextEditor
+        if (lesson.content.localImages && lesson.content.localImages.length > 0) {
+          lesson.content.localImages.forEach(localImage => {
+            const imageUploadPromise = mediaService.uploadImage(localImage.file)
+              .then(uploadedImage => {
+                console.log('🖼️ CourseBuilder - Remplacement URL dans contenu:', {
+                  localUrl: localImage.localUrl,
+                  uploadedUrl: uploadedImage.url
+                });
+                
+                // Remplacer l'URL locale par l'URL uploadée dans le contenu HTML
+                if (lesson.content.textContent) {
+                  lesson.content.textContent = lesson.content.textContent.replace(
+                    localImage.localUrl,
+                    uploadedImage.url
+                  );
+                }
+                
+                // Nettoyer l'URL locale
+                URL.revokeObjectURL(localImage.localUrl);
+              });
+            uploadsPromises.push(imageUploadPromise);
+          });
+          
+          // Vider la liste des images locales après avoir créé les promesses d'upload
+          lesson.content.localImages = [];
         }
       });
     });
