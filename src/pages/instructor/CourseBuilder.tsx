@@ -181,53 +181,6 @@ const CourseOverview = ({
               />
             </div>
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Catégorie
-              </label>
-              <select
-                value={course.category || ''}
-                onChange={(e) => setCourse({ ...course, category: e.target.value as Course['category'] })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="programming">Programmation</option>
-                <option value="design">Design</option>
-                <option value="marketing">Marketing</option>
-                <option value="business">Business</option>
-                <option value="science">Science</option>
-                <option value="mathematics">Mathématiques</option>
-                <option value="languages">Langues</option>
-                <option value="other">Autre</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Niveau
-              </label>
-              <select
-                value={course.level || ''}
-                onChange={(e) => setCourse({ ...course, level: e.target.value as Course['level'] })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="beginner">Débutant</option>
-                <option value="intermediate">Intermédiaire</option>
-                <option value="advanced">Avancé</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Prix (€)
-              </label>
-              <Input
-                type="number"
-                value={course.price || 0}
-                onChange={(e) => setCourse({ ...course, price: Number(e.target.value) })}
-                min="0"
-                placeholder="0"
-              />
-            </div>
           </div>
         </div>
 
