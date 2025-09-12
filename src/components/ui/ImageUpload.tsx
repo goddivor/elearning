@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from "react";
 import { Eye, Image, Import, Trash } from "iconsax-react";
 import Button from "./Button";
-import { toast } from "react-hot-toast";
+import { useToast } from '@/context/toast-context';
 import { mediaService } from "@/services/mediaService";
 
 // Interface pour une image locale (avant upload)
@@ -40,6 +40,7 @@ const ImageUpload = ({
 }: ImageUploadProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { success, error: showError } = useToast();
 
   // Helper pour déterminer si c'est une image locale ou uploadée
   const isLocalImage = (
@@ -71,7 +72,7 @@ const ImageUpload = ({
         mediaService.getValidationOptions("image")
       );
       if (!validation.valid) {
-        toast.error(validation.error || "Fichier image invalide");
+        showError("Image invalide", validation.error || "Fichier image invalide");
         return;
       }
 
@@ -87,9 +88,9 @@ const ImageUpload = ({
       };
 
       onImageSelect(localImage);
-      toast.success("Image sélectionnée (sera uploadée à la sauvegarde)");
+      success("Image sélectionnée", "L'image sera uploadée à la sauvegarde");
     },
-    [onImageSelect, disabled]
+    [onImageSelect, disabled, success, showError]
   );
 
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -130,10 +131,10 @@ const ImageUpload = ({
       if (files.length > 0 && files[0].type.startsWith("image/")) {
         handleFiles(e.dataTransfer.files);
       } else {
-        toast.error("Veuillez déposer un fichier image valide");
+        showError("Fichier invalide", "Veuillez déposer un fichier image valide");
       }
     },
-    [handleFiles, disabled]
+    [handleFiles, disabled, showError]
   );
 
   const handleFileInput = useCallback(
@@ -163,7 +164,7 @@ const ImageUpload = ({
             alt={imageName}
             className="w-full h-full object-cover"
             onError={() => {
-              toast.error("Impossible de charger l'image");
+              showError("Erreur d'image", "Impossible de charger l'image");
             }}
           />
 

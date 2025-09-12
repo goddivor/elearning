@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
-import { toast } from 'react-hot-toast';
+import { useToast } from '@/context/toast-context';
 import { mediaService } from '@/services/mediaService';
 import {
   ArrowUUpLeft,
@@ -55,6 +55,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const editorRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const { success, error: showError } = useToast();
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [showImageInput, setShowImageInput] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
@@ -222,7 +223,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     const selectedText = range.toString();
     
     if (!selectedText) {
-      toast.error('Veuillez sélectionner du texte pour changer la casse');
+      showError('Sélection requise', 'Veuillez sélectionner du texte pour changer la casse');
       return;
     }
     
@@ -357,7 +358,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   // Insert link with URL
   const insertLink = () => {
     if (!linkUrl || disabled) {
-      toast.error('Veuillez entrer une URL valide');
+      showError('URL invalide', 'Veuillez entrer une URL valide');
       return;
     }
     
@@ -421,7 +422,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       
     } catch (error) {
       console.error('🔗 Erreur lors de l\'insertion du lien:', error);
-      toast.error('Erreur lors de l\'insertion du lien');
+      showError('Erreur de lien', 'Erreur lors de l\'insertion du lien');
     }
     
     // Fermer le modal
@@ -501,7 +502,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     // Validate file using our media service
     const validation = mediaService.validateFile(file, mediaService.getValidationOptions('image'));
     if (!validation.valid) {
-      toast.error(validation.error || 'Fichier image invalide');
+      showError('Image invalide', validation.error || 'Fichier image invalide');
       return;
     }
 
@@ -523,7 +524,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     
     // Utiliser l'URL locale pour l'affichage
     setImageUrl(localUrl);
-    toast.success('Image sélectionnée (sera uploadée à la sauvegarde)');
+    success('Image sélectionnée', 'L\'image sera uploadée à la sauvegarde');
   };
 
   // Handle file input change
@@ -995,7 +996,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
                     alt={imageAlt || "Aperçu"}
                     className="w-full max-h-48 object-contain rounded-lg border border-gray-200"
                     onError={() => {
-                      toast.error('Impossible de charger l\'aperçu de l\'image');
+                      showError('Erreur d\'image', 'Impossible de charger l\'aperçu de l\'image');
                     }}
                   />
                 </div>

@@ -14,7 +14,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
 import { courseService, type Course, type CreateCourseDto } from '@/services/courseService';
-import { toast } from 'react-hot-toast';
+import { useToast } from '@/context/toast-context';
 import CourseBuilderSidebar from '@/components/course-builder/CourseBuilderSidebar';
 import ModuleEditor from '@/components/course-builder/ModuleEditor';
 import LessonEditor from '@/components/course-builder/LessonEditor';
@@ -324,6 +324,7 @@ const CourseBuilder = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
   const isEditing = Boolean(courseId);
+  const { success, error: showError, info } = useToast();
   
   useTitle(isEditing ? "Modifier le Cours" : "Créateur de Cours");
 
@@ -365,11 +366,11 @@ const CourseBuilder = () => {
       // For now, we'll use mock data
       loadModules();
     } catch {
-      toast.error('Erreur lors du chargement du cours');
+      showError('Erreur de chargement', 'Erreur lors du chargement du cours');
     } finally {
       setLoading(false);
     }
-  }, [courseId]);
+  }, [courseId, showError]);
 
   useEffect(() => {
     if (isEditing && courseId) {
@@ -463,16 +464,16 @@ const CourseBuilder = () => {
       
       if (isEditing) {
         await courseService.updateCourse(courseId!, course);
-        toast.success('Cours modifié avec succès');
+        success('Cours modifié', 'Cours modifié avec succès');
       } else {
         const newCourse = await courseService.createCourse(course as CreateCourseDto);
-        toast.success('Cours créé avec succès');
+        success('Cours créé', 'Cours créé avec succès');
         navigate(`/dashboard/instructor/course-builder/${newCourse.id}`);
       }
       
       setHasUnsavedChanges(false);
     } catch {
-      toast.error('Erreur lors de la sauvegarde');
+      showError('Erreur de sauvegarde', 'Erreur lors de la sauvegarde');
     } finally {
       setSaving(false);
     }
@@ -547,9 +548,9 @@ const CourseBuilder = () => {
     });
 
     if (uploadsPromises.length > 0) {
-      toast.loading(`Upload de ${uploadsPromises.length} fichier(s) en cours...`);
+      info('Upload en cours', `Upload de ${uploadsPromises.length} fichier(s) en cours...`);
       await Promise.all(uploadsPromises);
-      toast.success('Fichiers uploadés avec succès');
+      success('Upload terminé', 'Fichiers uploadés avec succès');
     }
   };
 
@@ -568,11 +569,11 @@ const CourseBuilder = () => {
       }
       
       setHasUnsavedChanges(false);
-      toast.success('Brouillon sauvegardé');
+      success('Brouillon sauvegardé', 'Brouillon sauvegardé');
       return true;
     } catch (error) {
       console.error('Draft save failed:', error);
-      toast.error('Erreur lors de la sauvegarde du brouillon');
+      showError('Erreur de brouillon', 'Erreur lors de la sauvegarde du brouillon');
       return false;
     }
   };
@@ -589,7 +590,7 @@ const CourseBuilder = () => {
     // Try to save as draft before exiting
     const saved = await handleSaveAsDraft();
     if (saved) {
-      toast.success('Brouillon sauvegardé automatiquement');
+      success('Sauvegarde auto', 'Brouillon sauvegardé automatiquement');
     }
     navigate('/dashboard/instructor/courses');
   };
@@ -663,7 +664,7 @@ const CourseBuilder = () => {
         setSelectedModuleId(null);
         setCurrentMode('overview');
       }
-      toast.success('Module supprimé avec succès');
+      success('Module supprimé', 'Module supprimé avec succès');
       setModuleToDelete(null);
     }
   };
@@ -696,7 +697,7 @@ const CourseBuilder = () => {
         setCurrentMode('module');
       }
       
-      toast.success('Leçon supprimée avec succès');
+      success('Leçon supprimée', 'Leçon supprimée avec succès');
       setLessonToDelete(null);
     }
   };

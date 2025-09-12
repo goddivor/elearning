@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
   Book,
@@ -16,10 +16,11 @@ import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
 import Input from "@/components/ui/Input";
 import { courseService, type Course } from "@/services/courseService";
-import { toast } from "react-hot-toast";
+import { useToast } from '@/context/toast-context';
 
 const InstructorCourses = () => {
   useTitle("Mes Cours");
+  const { success, error: showError } = useToast();
 
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,21 +29,21 @@ const InstructorCourses = () => {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"table" | "grid">("table");
 
-  useEffect(() => {
-    loadCourses();
-  }, []);
-
-  const loadCourses = async () => {
+  const loadCourses = useCallback(async () => {
     try {
       setLoading(true);
       const data = await courseService.getCoursesByInstructor();
       setCourses(data);
     } catch {
-      toast.error("Erreur lors du chargement des cours");
+      showError("Erreur de chargement", "Erreur lors du chargement des cours");
     } finally {
       setLoading(false);
     }
-  };
+  }, [showError]);
+
+  useEffect(() => {
+    loadCourses();
+  }, [loadCourses]);
 
   const handleDeleteCourse = async (courseId: string) => {
     if (!window.confirm("Êtes-vous sûr de vouloir supprimer ce cours ?")) {
@@ -51,20 +52,20 @@ const InstructorCourses = () => {
 
     try {
       await courseService.deleteCourse(courseId);
-      toast.success("Cours supprimé avec succès");
+      success("Cours supprimé", "Cours supprimé avec succès");
       loadCourses();
     } catch {
-      toast.error("Erreur lors de la suppression du cours");
+      showError("Erreur de suppression", "Erreur lors de la suppression du cours");
     }
   };
 
   const handleTogglePublish = async (courseId: string) => {
     try {
       await courseService.togglePublishCourse(courseId);
-      toast.success("Statut du cours modifié avec succès");
+      success("Statut modifié", "Statut du cours modifié avec succès");
       loadCourses();
     } catch {
-      toast.error("Erreur lors de la modification du statut");
+      showError("Erreur de statut", "Erreur lors de la modification du statut");
     }
   };
 

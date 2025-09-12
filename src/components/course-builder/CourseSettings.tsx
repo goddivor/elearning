@@ -4,7 +4,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
 import ImageUpload, { type LocalImage, type UploadedImage } from '@/components/ui/ImageUpload';
-import { toast } from 'react-hot-toast';
+import { useToast } from '@/context/toast-context';
 import type { Course } from '@/services/courseService';
 
 interface Props {
@@ -13,6 +13,7 @@ interface Props {
 }
 
 const CourseSettings = ({ course, onUpdateCourse }: Props) => {
+  const { error: showError } = useToast();
 
   const handleImageSelect = (localImage: LocalImage | null) => {
     if (localImage) {
@@ -148,7 +149,7 @@ const CourseSettings = ({ course, onUpdateCourse }: Props) => {
                         alt="Aperçu du cours"
                         className="w-full h-full object-cover"
                         onError={() => {
-                          toast.error('Impossible de charger l\'image');
+                          showError('Erreur d\'image', 'Impossible de charger l\'image');
                         }}
                       />
                       {'preview' in existingImage && (

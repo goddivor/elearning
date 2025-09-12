@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { DocumentText, Import, Trash } from 'iconsax-react';
 import Button from './Button';
-import { toast } from 'react-hot-toast';
+import { useToast } from '@/context/toast-context';
 import { mediaService } from '@/services/mediaService';
 
 // Interface pour un fichier local (avant upload)
@@ -37,6 +37,7 @@ const DocumentUpload = ({
   className = '' 
 }: DocumentUploadProps) => {
   const [isDragging, setIsDragging] = useState(false);
+  const { success, error: showError } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Helper pour déterminer si c'est un fichier local ou uploadé
@@ -66,7 +67,7 @@ const DocumentUpload = ({
     
     if (!validation.valid) {
       console.log('📄 DocumentUpload - Fichier invalide:', validation.error);
-      toast.error(validation.error || 'Fichier invalide');
+      showError('Fichier invalide', validation.error || 'Fichier invalide');
       return;
     }
 
@@ -84,8 +85,8 @@ const DocumentUpload = ({
 
     console.log('📄 DocumentUpload - Appel de onFileSelect avec:', localFile);
     onFileSelect(localFile);
-    toast.success('Document sélectionné (sera uploadé à la sauvegarde)');
-  }, [onFileSelect, disabled]);
+    success('Document sélectionné', 'Le document sera uploadé à la sauvegarde');
+  }, [onFileSelect, disabled, success, showError]);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();

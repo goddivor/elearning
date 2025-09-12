@@ -23,7 +23,7 @@ import DocumentUpload, {
 import RichTextEditor, {
   type LocalImage,
 } from "@/components/ui/RichTextEditor";
-import { toast } from "react-hot-toast";
+import { useToast } from '@/context/toast-context';
 import { mediaService } from "@/services/mediaService";
 
 interface Lesson {
@@ -167,10 +167,11 @@ const LessonEditor = ({ lesson, onUpdateLesson }: Props) => {
   const [isPreview, setIsPreview] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [renderKey, setRenderKey] = useState(0);
+  const { success, error: showError } = useToast();
 
   const handleSave = () => {
     onUpdateLesson(editedLesson);
-    toast.success("Leçon sauvegardée avec succès");
+    success("Sauvegarde réussie", "Leçon sauvegardée avec succès");
   };
 
   const handleContentChange = (field: string, value: unknown) => {
@@ -250,7 +251,7 @@ const LessonEditor = ({ lesson, onUpdateLesson }: Props) => {
         mediaService.getValidationOptions(type)
       );
       if (!validation.valid) {
-        toast.error(validation.error || "Fichier invalide");
+        showError("Fichier invalide", validation.error || "Fichier invalide");
         return Promise.reject("Fichier invalide");
       }
 
@@ -272,14 +273,15 @@ const LessonEditor = ({ lesson, onUpdateLesson }: Props) => {
           break;
       }
 
-      toast.success(
+      success(
+        "Téléchargement réussi",
         `${type === "3d" ? "Modèle 3D" : "Document"} téléchargé avec succès`
       );
       setUploadProgress(null);
       return uploadedFile.url;
     } catch (error) {
       setUploadProgress(null);
-      toast.error("Erreur lors du téléchargement");
+      showError("Erreur de téléchargement", "Erreur lors du téléchargement");
       throw error;
     }
   };
@@ -1715,7 +1717,6 @@ const Model3DEditor = ({
         onChange={(e) => {
           if (e.target.files?.[0]) {
             onUpload?.(e.target.files[0], "3d");
-            toast.loading("Téléchargement du modèle 3D en cours...");
           }
         }}
         className="hidden"
