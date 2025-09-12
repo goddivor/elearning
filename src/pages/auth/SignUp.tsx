@@ -14,7 +14,7 @@ const SignUp = () => {
   useTitle("Inscription");
   const navigate = useNavigate();
   const { success, error: showError } = useToast();
-  const { isAuthenticated, login } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     if (isAuthenticated) {

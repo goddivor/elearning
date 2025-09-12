@@ -1,4 +1,4 @@
-import React from 'react';
+// React import removed - not needed with new JSX transform
 import { Link, useNavigate } from 'react-router-dom';
 import { Profile, LogoutCurve, Notification } from 'iconsax-react';
 import { useAuth } from '@/contexts/AuthContext';

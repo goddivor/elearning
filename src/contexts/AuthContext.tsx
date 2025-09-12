@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { AuthService } from '@/services/authService';
 import type { User } from '@/types/auth';
 
@@ -41,7 +41,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const freshUserData = await AuthService.getProfile();
           setUser(freshUserData);
         }
-      } catch (error) {
+      } catch {
         // Token invalide ou expiré, nettoyer le localStorage
         AuthService.logout();
       } finally {

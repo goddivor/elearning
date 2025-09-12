@@ -1,4 +1,4 @@
-import React from 'react';
+// React import removed - not needed with new JSX transform
 import { SearchNormal1, CloseCircle, Filter } from 'iconsax-react';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';

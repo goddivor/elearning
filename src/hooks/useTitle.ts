@@ -7,7 +7,6 @@ import { useEffect } from 'react';
  */
 const useTitle = (title: string, suffix: string = "3D E-Learning") => {
   useEffect(() => {
-    const prevTitle = document.title;
     const fullTitle = title ? `${title} - ${suffix}` : suffix;
     document.title = fullTitle;
 
