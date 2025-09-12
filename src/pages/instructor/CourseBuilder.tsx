@@ -328,6 +328,11 @@ const CourseBuilder = () => {
   
   useTitle(isEditing ? "Modifier le Cours" : "Créateur de Cours");
 
+  // Helper function to calculate module duration from its lessons
+  const calculateModuleDuration = (lessons: Lesson[]): number => {
+    return lessons.reduce((total, lesson) => total + (lesson.duration || 0), 0);
+  };
+
   // Course data
   const [course, setCourse] = useState<Partial<Course>>({
     title: '',
@@ -634,9 +639,11 @@ const CourseBuilder = () => {
 
     setModules(modules.map(module => {
       if (module.id === moduleId) {
+        const updatedLessons = [...module.lessons, newLesson];
         return {
           ...module,
-          lessons: [...module.lessons, newLesson]
+          lessons: updatedLessons,
+          duration: calculateModuleDuration(updatedLessons) // Recalculate module duration
         };
       }
       return module;
@@ -684,9 +691,11 @@ const CourseBuilder = () => {
       
       setModules(modules.map(module => {
         if (module.id === moduleId) {
+          const updatedLessons = module.lessons.filter(l => l.id !== lessonId);
           return {
             ...module,
-            lessons: module.lessons.filter(l => l.id !== lessonId)
+            lessons: updatedLessons,
+            duration: calculateModuleDuration(updatedLessons) // Recalculate module duration
           };
         }
         return module;
@@ -746,9 +755,11 @@ const CourseBuilder = () => {
             onUpdateLesson={(updatedLesson) => {
               setModules(modules.map(m => {
                 if (m.id === module.id) {
+                  const updatedLessons = m.lessons.map(l => l.id === updatedLesson.id ? updatedLesson : l);
                   return {
                     ...m,
-                    lessons: m.lessons.map(l => l.id === updatedLesson.id ? updatedLesson : l)
+                    lessons: updatedLessons,
+                    duration: calculateModuleDuration(updatedLessons) // Recalculate module duration
                   };
                 }
                 return m;
