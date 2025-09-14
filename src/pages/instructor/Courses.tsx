@@ -6,7 +6,6 @@ import {
   Edit,
   Eye,
   Trash,
-  More,
   Grid2,
   Category,
 } from "iconsax-react";
@@ -193,20 +192,20 @@ const InstructorCourses = () => {
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => window.open(`/course/${course.id}`, "_blank")}
+            onClick={() => window.open(`/dashboard/instructor/course/${course.id}`, "_blank")}
             title="Prévisualiser"
           >
-            <Eye size={16} />
+            <Eye size={16} color="#6B7280" />
           </Button>
           <Button
             size="sm"
             variant="ghost"
             onClick={() =>
-              window.open(`/instructor/course/${course.id}/edit`, "_blank")
+              window.open(`/dashboard/instructor/course-builder/${course.id}`, "_blank")
             }
             title="Modifier"
           >
-            <Edit size={16} />
+            <Edit size={16} color="#3B82F6" />
           </Button>
           <Button
             size="sm"
@@ -215,7 +214,7 @@ const InstructorCourses = () => {
             className="text-red-600 hover:text-red-700"
             title="Supprimer"
           >
-            <Trash size={16} />
+            <Trash size={16} color="#EF4444" />
           </Button>
         </div>
       ),
@@ -343,7 +342,7 @@ const InstructorCourses = () => {
                     to="/dashboard/instructor/course-builder"
                     className="flex items-center space-x-2"
                   >
-                    <Add size={20} />
+                    <Add size={20} color="white" />
                     <span>Créer mon premier cours</span>
                   </Link>
                   </Button>
@@ -368,7 +367,7 @@ const InstructorCourses = () => {
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <Book size={40} className="text-gray-400" />
+                    <Book size={40} color="#9CA3AF" />
                   </div>
                 )}
                 <div className="absolute top-3 right-3">
@@ -397,15 +396,32 @@ const InstructorCourses = () => {
                 </div>
 
                 <div className="flex items-center space-x-2">
-                  <Button size="sm" variant="outline" className="flex-1">
-                    <Edit size={14} className="mr-1" />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => window.open(`/dashboard/instructor/course-builder/${course.id}`, "_blank")}
+                    title="Modifier"
+                  >
+                    <Edit size={14} color="#3B82F6" className="mr-1" />
                     Modifier
                   </Button>
-                  <Button size="sm" variant="ghost">
-                    <Eye size={14} />
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => window.open(`/dashboard/instructor/course/${course.id}`, "_blank")}
+                    title="Prévisualiser"
+                  >
+                    <Eye size={14} color="#6B7280" />
                   </Button>
-                  <Button size="sm" variant="ghost">
-                    <More size={14} />
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleDeleteCourse(course.id)}
+                    title="Supprimer"
+                    className="hover:text-red-600"
+                  >
+                    <Trash size={14} color="#EF4444" />
                   </Button>
                 </div>
               </div>

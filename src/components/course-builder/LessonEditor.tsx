@@ -147,11 +147,11 @@ interface AssignmentData {
   documentUrl?: string;
   videoUrl?: string;
   resourceLinks?: string[];
-  submissionType?: string;
+  submissionType?: 'file' | 'text' | 'url' | 'both';
   acceptedFormats?: string;
   maxFileSize?: number;
   allowLateSubmission?: boolean;
-  gradingType?: string;
+  gradingType?: 'points' | 'letter' | 'pass_fail';
   gradingCriteria?: string;
   autoGrade?: boolean;
   peerReview?: boolean;
@@ -257,19 +257,17 @@ const LessonEditor = ({ lesson, onUpdateLesson }: Props) => {
 
       setUploadProgress(0);
 
-      const uploadedFile = await mediaService.uploadFile(file, (progress) => {
-        setUploadProgress(progress.progress);
-      });
+      const uploadedFile = await mediaService.uploadFile(file, type === 'document' ? 'document' : 'course');
 
       switch (type) {
         case "document":
           handleContentChange("documentUrl", uploadedFile.url);
-          handleContentChange("documentName", uploadedFile.originalname);
+          handleContentChange("documentName", uploadedFile.originalName);
           handleContentChange("documentType", uploadedFile.mimetype);
           break;
         case "3d":
           handleContentChange("model3dUrl", uploadedFile.url);
-          handleContentChange("model3dName", uploadedFile.originalname);
+          handleContentChange("model3dName", uploadedFile.originalName);
           break;
       }
 

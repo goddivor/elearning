@@ -2,301 +2,199 @@ import api from './api';
 
 export interface UploadedFile {
   filename: string;
-  originalname: string;
-  mimetype: string;
+  originalName: string;
   size: number;
+  mimetype: string;
   url: string;
-  type: 'image' | 'video' | 'document' | '3d' | 'other';
-}
-
-export interface UploadProgress {
-  progress: number;
-  filename?: string;
+  path: string;
+  type: 'course' | 'avatar' | 'document' | 'video' | '3d' | 'other';
 }
 
 class MediaService {
-  /**
-   * Upload a single file
-   */
-  async uploadFile(
-    file: File, 
-    onProgress?: (progress: UploadProgress) => void
+  // Upload d'un seul fichier
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async uploadFile(file: File, _type: 'course' | 'avatar' | 'document' = 'course'): Promise<UploadedFile> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await api.post('/media/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    return response.data;
+  }
+
+  // Upload de plusieurs fichiers
+  async uploadMultipleFiles(files: File[]): Promise<UploadedFile[]> {
+    const formData = new FormData();
+
+    files.forEach(file => {
+      formData.append('files', file);
+    });
+
+    const response = await api.post('/media/upload/multiple', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    return response.data;
+  }
+
+  // Upload spécifique pour les documents
+  async uploadDocument(file: File): Promise<UploadedFile> {
+    const formData = new FormData();
+    formData.append('document', file);
+
+    const response = await api.post('/media/upload/document', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    return response.data;
+  }
+
+  // Upload avec suivi de progression
+  async uploadFileWithProgress(
+    file: File,
+    onProgress?: (progress: number) => void,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _type: 'course' | 'avatar' | 'document' = 'course'
   ): Promise<UploadedFile> {
     const formData = new FormData();
     formData.append('file', file);
 
-    try {
-      const response = await api.post('/media/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        onUploadProgress: (progressEvent) => {
-          if (onProgress && progressEvent.total) {
-            const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            onProgress({ progress, filename: file.name });
-          }
-        },
-      });
-
-      return response.data;
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      throw new Error('Erreur lors du téléchargement du fichier');
-    }
-  }
-
-  /**
-   * Upload document specifically
-   */
-  async uploadDocument(
-    file: File, 
-    onProgress?: (progress: UploadProgress) => void
-  ): Promise<UploadedFile> {
-    const formData = new FormData();
-    formData.append('document', file);
-
-    try {
-      const response = await api.post('/media/upload/document', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        onUploadProgress: (progressEvent) => {
-          if (onProgress && progressEvent.total) {
-            const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            onProgress({ progress, filename: file.name });
-          }
-        },
-      });
-
-      return response.data;
-    } catch (error) {
-      console.error('Error uploading document:', error);
-      throw new Error('Erreur lors du téléchargement du document');
-    }
-  }
-
-  /**
-   * Upload image specifically
-   */
-  async uploadImage(
-    file: File, 
-    onProgress?: (progress: UploadProgress) => void
-  ): Promise<UploadedFile> {
-    const formData = new FormData();
-    formData.append('image', file);
-
-    try {
-      const response = await api.post('/media/upload/image', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        onUploadProgress: (progressEvent) => {
-          if (onProgress && progressEvent.total) {
-            const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            onProgress({ progress, filename: file.name });
-          }
-        },
-      });
-
-      return response.data;
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      throw new Error('Erreur lors du téléchargement de l\'image');
-    }
-  }
-
-  /**
-   * Upload multiple files
-   */
-  async uploadFiles(
-    files: File[], 
-    onProgress?: (progress: UploadProgress) => void
-  ): Promise<UploadedFile[]> {
-    const formData = new FormData();
-    
-    files.forEach((file) => {
-      formData.append('files', file);
+    const response = await api.post('/media/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total && onProgress) {
+          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onProgress(progress);
+        }
+      },
     });
 
-    try {
-      const response = await api.post('/media/upload/multiple', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        onUploadProgress: (progressEvent) => {
-          if (onProgress && progressEvent.total) {
-            const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            onProgress({ progress });
-          }
-        },
-      });
-
-      return response.data;
-    } catch (error) {
-      console.error('Error uploading files:', error);
-      throw new Error('Erreur lors du téléchargement des fichiers');
-    }
+    return response.data;
   }
 
-  /**
-   * Delete a file
-   */
-  async deleteFile(filename: string): Promise<boolean> {
-    try {
-      await api.delete(`/media/${filename}`);
-      return true;
-    } catch (error) {
-      console.error('Error deleting file:', error);
-      throw new Error('Erreur lors de la suppression du fichier');
-    }
+  // Construire l'URL complète pour accéder à un fichier
+  getFileUrl(filePath: string): string {
+    return `${api.defaults.baseURL}/media/file/${filePath}`;
   }
 
-  /**
-   * Get file info
-   */
-  async getFileInfo(filename: string): Promise<UploadedFile> {
-    try {
-      const response = await api.get(`/media/info/${filename}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error getting file info:', error);
-      throw new Error('Erreur lors de la récupération des informations du fichier');
-    }
+  // Valider le type de fichier
+  validateFileType(file: File, allowedTypes: string[]): boolean {
+    return allowedTypes.includes(file.type);
   }
 
-  /**
-   * Get file URL for serving
-   */
-  getFileUrl(filename: string): string {
-    return `/api/media/file/${filename}`;
+  // Valider la taille du fichier (en MB)
+  validateFileSize(file: File, maxSizeMB: number): boolean {
+    const maxSizeBytes = maxSizeMB * 1024 * 1024;
+    return file.size <= maxSizeBytes;
   }
 
-  /**
-   * Validate file type and size
-   */
-  validateFile(file: File, options: {
-    maxSize?: number; // in MB
-    allowedTypes?: string[];
-  } = {}): { valid: boolean; error?: string } {
-    const { maxSize = 100, allowedTypes } = options;
-    
-    // Check file size
-    const fileSizeMB = file.size / (1024 * 1024);
-    if (fileSizeMB > maxSize) {
-      return {
-        valid: false,
-        error: `Le fichier est trop volumineux (${fileSizeMB.toFixed(1)}MB). Taille maximum: ${maxSize}MB`
-      };
-    }
+  // Types de fichiers autorisés par catégorie
+  getAllowedFileTypes(category: 'image' | 'video' | 'document' | 'audio' | '3d'): string[] {
+    const allowedTypes = {
+      image: [
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'image/webp',
+        'image/svg+xml'
+      ],
+      video: [
+        'video/mp4',
+        'video/webm',
+        'video/ogg',
+        'video/avi',
+        'video/mov',
+        'video/wmv'
+      ],
+      document: [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'text/plain',
+        'text/markdown'
+      ],
+      audio: [
+        'audio/mpeg',
+        'audio/wav',
+        'audio/ogg',
+        'audio/m4a'
+      ],
+      '3d': [
+        'model/gltf-binary',
+        'model/gltf+json',
+        'application/octet-stream'
+      ]
+    };
 
-    // Check file type if specified
-    if (allowedTypes && allowedTypes.length > 0) {
-      const fileExtension = file.name.split('.').pop()?.toLowerCase() || '';
-      const isAllowed = allowedTypes.some(type => 
-        file.type.includes(type) || fileExtension === type.replace('.', '')
-      );
-      
-      if (!isAllowed) {
-        return {
-          valid: false,
-          error: `Type de fichier non autorisé. Types autorisés: ${allowedTypes.join(', ')}`
-        };
-      }
-    }
-
-    return { valid: true };
+    return allowedTypes[category] || [];
   }
 
-  /**
-   * Get file type category
-   */
-  getFileType(file: File): 'image' | 'video' | 'document' | '3d' | 'other' {
-    const type = file.type.toLowerCase();
-    const extension = file.name.split('.').pop()?.toLowerCase() || '';
-
-    if (type.startsWith('image/')) {
-      return 'image';
-    }
-    
-    if (type.startsWith('video/')) {
-      return 'video';
-    }
-    
-    if (type.includes('pdf') || 
-        type.includes('document') || 
-        type.includes('presentation') ||
-        type.includes('text')) {
-      return 'document';
-    }
-    
-    // Check for 3D file extensions
-    if (['obj', 'fbx', 'gltf', 'glb'].includes(extension)) {
-      return '3d';
-    }
-    
-    return 'other';
-  }
-
-  /**
-   * Format file size for display
-   */
+  // Formater la taille de fichier
   formatFileSize(bytes: number): string {
     if (bytes === 0) return '0 B';
-    
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
-  /**
-   * Get appropriate validation options by content type
-   */
-  getValidationOptions(contentType: 'video' | 'image' | 'document' | '3d'): {
-    maxSize: number;
-    allowedTypes: string[];
-  } {
-    switch (contentType) {
-      case 'image':
-        return {
-          maxSize: 10, // 10MB
-          allowedTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-        };
-      
-      case 'video':
-        return {
-          maxSize: 500, // 500MB
-          allowedTypes: ['video/mp4', 'video/webm', 'video/avi', 'video/quicktime']
-        };
-      
-      case 'document':
-        return {
-          maxSize: 50, // 50MB
-          allowedTypes: [
-            'application/pdf',
-            'application/msword',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'application/vnd.ms-powerpoint',
-            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-            'application/vnd.ms-excel',
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'text/plain'
-          ]
-        };
-      
-      case '3d':
-        return {
-          maxSize: 100, // 100MB
-          allowedTypes: ['obj', 'fbx', 'gltf', 'glb']
-        };
-      
-      default:
-        return {
-          maxSize: 100,
-          allowedTypes: []
-        };
+  // Options de validation par catégorie
+  getValidationOptions(category: 'image' | 'video' | 'document' | 'audio' | '3d') {
+    const options = {
+      image: {
+        maxSizeMB: 10,
+        allowedTypes: this.getAllowedFileTypes('image')
+      },
+      video: {
+        maxSizeMB: 100,
+        allowedTypes: this.getAllowedFileTypes('video')
+      },
+      document: {
+        maxSizeMB: 25,
+        allowedTypes: this.getAllowedFileTypes('document')
+      },
+      audio: {
+        maxSizeMB: 50,
+        allowedTypes: this.getAllowedFileTypes('audio')
+      },
+      '3d': {
+        maxSizeMB: 50,
+        allowedTypes: this.getAllowedFileTypes('3d')
+      }
+    };
+
+    return options[category];
+  }
+
+  // Valider un fichier selon ses options
+  validateFile(file: File, options: { maxSizeMB: number; allowedTypes: string[] }) {
+    // Vérifier le type
+    if (!this.validateFileType(file, options.allowedTypes)) {
+      return {
+        valid: false,
+        error: `Type de fichier non autorisé. Types acceptés: ${options.allowedTypes.join(', ')}`
+      };
     }
+
+    // Vérifier la taille
+    if (!this.validateFileSize(file, options.maxSizeMB)) {
+      return {
+        valid: false,
+        error: `Fichier trop volumineux. Taille maximum: ${options.maxSizeMB}MB`
+      };
+    }
+
+    return { valid: true };
   }
 }
 

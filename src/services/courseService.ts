@@ -1,5 +1,6 @@
 import api from './api';
 import type { LocalImage } from '@/components/ui/ImageUpload';
+import { getFullFileUrl } from '@/utils/fileUtils';
 
 export interface Course {
   id: string;
@@ -47,8 +48,9 @@ export interface CreateCourseDto {
   level: 'beginner' | 'intermediate' | 'advanced';
   price: number;
   tags: string[];
-  thumbnailUrl?: string;
+  thumbnail?: string;
   previewUrl?: string;
+  status?: 'draft' | 'published' | 'archived';
 }
 
 export interface UpdateCourseDto {
@@ -58,8 +60,9 @@ export interface UpdateCourseDto {
   level?: 'beginner' | 'intermediate' | 'advanced';
   price?: number;
   tags?: string[];
-  thumbnailUrl?: string;
+  thumbnail?: string;
   previewUrl?: string;
+  status?: 'draft' | 'published' | 'archived';
 }
 
 class CourseService {
@@ -72,19 +75,43 @@ class CourseService {
   // Récupérer un cours par ID
   async getCourseById(id: string): Promise<Course> {
     const response = await api.get(`/courses/${id}`);
-    return response.data;
+    const courseData = response.data;
+
+    // Transformer les données backend vers frontend
+    return {
+      ...courseData,
+      id: courseData._id || courseData.id,
+      thumbnailUrl: getFullFileUrl(courseData.thumbnail || courseData.thumbnailUrl),
+      isPublished: courseData.status === 'published'
+    };
   }
 
   // Créer un nouveau cours
   async createCourse(data: CreateCourseDto): Promise<Course> {
     const response = await api.post('/courses', data);
-    return response.data;
+    const courseData = response.data;
+
+    // Transformer les données backend vers frontend
+    return {
+      ...courseData,
+      id: courseData._id || courseData.id,
+      thumbnailUrl: getFullFileUrl(courseData.thumbnail || courseData.thumbnailUrl),
+      isPublished: courseData.status === 'published'
+    };
   }
 
   // Mettre à jour un cours
   async updateCourse(id: string, data: UpdateCourseDto): Promise<Course> {
     const response = await api.patch(`/courses/${id}`, data);
-    return response.data;
+    const courseData = response.data;
+
+    // Transformer les données backend vers frontend
+    return {
+      ...courseData,
+      id: courseData._id || courseData.id,
+      thumbnailUrl: getFullFileUrl(courseData.thumbnail || courseData.thumbnailUrl),
+      isPublished: courseData.status === 'published'
+    };
   }
 
   // Supprimer un cours
@@ -95,16 +122,31 @@ class CourseService {
   // Publier/Dépublier un cours
   async togglePublishCourse(id: string): Promise<Course> {
     const response = await api.patch(`/courses/${id}/publish`);
-    return response.data;
+    const courseData = response.data;
+
+    // Transformer les données backend vers frontend
+    return {
+      ...courseData,
+      id: courseData._id || courseData.id,
+      thumbnailUrl: getFullFileUrl(courseData.thumbnail || courseData.thumbnailUrl),
+      isPublished: courseData.status === 'published'
+    };
   }
 
   // Récupérer les cours d'un instructeur
   async getCoursesByInstructor(instructorId?: string): Promise<Course[]> {
-    const endpoint = instructorId 
+    const endpoint = instructorId
       ? `/courses?instructor=${instructorId}`
       : '/courses/my-courses';
     const response = await api.get(endpoint);
-    return response.data;
+
+    // Transformer les données backend vers frontend
+    return response.data.map((course: Course & { _id?: string; thumbnail?: string; status?: string }) => ({
+      ...course,
+      id: course._id || course.id,
+      thumbnailUrl: getFullFileUrl(course.thumbnail || course.thumbnailUrl),
+      isPublished: course.status === 'published'
+    }));
   }
 
   // Récupérer les statistiques des cours

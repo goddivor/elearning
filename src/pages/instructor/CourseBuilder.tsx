@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
@@ -19,10 +18,13 @@ import CourseBuilderSidebar from '@/components/course-builder/CourseBuilderSideb
 import ModuleEditor from '@/components/course-builder/ModuleEditor';
 import LessonEditor from '@/components/course-builder/LessonEditor';
 import CourseSettings from '@/components/course-builder/CourseSettings';
+import CoursePreview from '@/components/course-preview/CoursePreview';
 import type { LocalFile } from '@/components/ui/DocumentUpload';
 import ConfirmationModal from '@/components/modals/confirmation-modal';
 import type { ModalRef } from '@/types/modal-ref';
-import mediaService, { type UploadedFile } from '@/services/mediaService';
+import mediaService from '@/services/mediaService';
+import moduleService from '@/services/moduleService';
+import lessonService from '@/services/lessonService';
 
 type BuilderMode = 'overview' | 'module' | 'lesson' | 'settings';
 
@@ -120,6 +122,24 @@ interface Lesson {
       instructions?: string;
       dueDate?: string;
       maxPoints?: number;
+      title?: string;
+      instructionType?: 'text' | 'video' | 'document';
+      instructionVideoUrl?: string;
+      instructionDocumentUrl?: string;
+      instructionDocumentName?: string;
+      instructionDocumentType?: string;
+      localInstructionDocument?: LocalFile;
+      documentUrl?: string;
+      videoUrl?: string;
+      resourceLinks?: string[];
+      submissionType?: 'file' | 'text' | 'url' | 'both';
+      acceptedFormats?: string;
+      maxFileSize?: number;
+      allowLateSubmission?: boolean;
+      gradingType?: 'points' | 'letter' | 'pass_fail';
+      gradingCriteria?: string;
+      autoGrade?: boolean;
+      peerReview?: boolean;
     };
   };
   resources: string[];
@@ -333,6 +353,53 @@ const CourseBuilder = () => {
     return lessons.reduce((total, lesson) => total + (lesson.duration || 0), 0);
   };
 
+  // Validate course prerequisites for preview
+  const validateCourseForPreview = () => {
+    const errors: string[] = [];
+    
+    // Vérifier le titre du cours
+    if (!course.title || course.title.trim().length === 0) {
+      errors.push('Le cours doit avoir un titre');
+    }
+    
+    // Vérifier la description du cours
+    if (!course.description || course.description.trim().length === 0) {
+      errors.push('Le cours doit avoir une description');
+    }
+    
+    // Vérifier l'image de couverture
+    if (!course.thumbnailUrl && !course.localThumbnail) {
+      errors.push('Le cours doit avoir une image de couverture');
+    }
+    
+    // Vérifier qu'il y a au moins un module
+    if (modules.length === 0) {
+      errors.push('Le cours doit avoir au moins un module');
+    } else {
+      // Vérifier qu'au moins un module a au moins une leçon
+      const modulesWithLessons = modules.filter(module => module.lessons.length > 0);
+      if (modulesWithLessons.length === 0) {
+        errors.push('Au moins un module doit contenir au moins une leçon');
+      }
+    }
+    
+    return errors;
+  };
+
+  const handlePreviewCourse = () => {
+    const validationErrors = validateCourseForPreview();
+    
+    if (validationErrors.length > 0) {
+      showError(
+        'Prévisualisation impossible', 
+        `Pour prévisualiser le cours, vous devez corriger les éléments suivants :\n• ${validationErrors.join('\n• ')}`
+      );
+      return;
+    }
+    
+    setShowPreview(true);
+  };
+
   // Course data
   const [course, setCourse] = useState<Partial<Course>>({
     title: '',
@@ -358,24 +425,72 @@ const CourseBuilder = () => {
   const exitConfirmModalRef = useRef<ModalRef>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [lastAutoSave] = useState<Date | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+
+  const loadModules = useCallback(async () => {
+    if (!courseId) {
+      // Si on est en création de cours, pas de modules à charger
+      setModules([]);
+      return;
+    }
+
+    try {
+      // Charger les modules depuis l'API
+      const moduleData = await moduleService.getModulesByCourse(courseId);
+
+      // Pour chaque module, charger ses leçons
+      const modulesWithLessons = await Promise.all(
+        moduleData.map(async (module) => {
+          try {
+            const lessons = await lessonService.getLessonsByModule(module.id);
+            return {
+              ...module,
+              lessons: lessons.map(lesson => ({
+                ...lesson,
+                id: lesson.id || (lesson as { _id?: string })._id, // Gérer les deux formats d'ID
+                type: lesson.content.type as 'video' | 'text' | 'quiz' | 'assignment' | '3d' | 'document' // Ajouter la propriété type
+              }))
+            };
+          } catch {
+            // Si erreur lors du chargement des leçons, retourner le module sans leçons
+            return {
+              ...module,
+              lessons: []
+            };
+          }
+        })
+      );
+
+      // Transformer les IDs si nécessaire
+      const transformedModules = modulesWithLessons.map(module => ({
+        ...module,
+        id: module.id || (module as { _id?: string })._id // Gérer les deux formats d'ID
+      }));
+
+      setModules(transformedModules as Module[]);
+    } catch (error) {
+      console.error('Erreur lors du chargement des modules:', error);
+      // En cas d'erreur, initialiser avec un tableau vide
+      setModules([]);
+    }
+  }, [courseId]);
 
   const loadCourse = useCallback(async () => {
     if (!courseId) return;
-    
+
     try {
       setLoading(true);
       const courseData = await courseService.getCourseById(courseId);
       setCourse(courseData);
-      
-      // Load modules and lessons would go here
-      // For now, we'll use mock data
-      loadModules();
+
+      // Charger les modules et leçons depuis l'API
+      await loadModules();
     } catch {
       showError('Erreur de chargement', 'Erreur lors du chargement du cours');
     } finally {
       setLoading(false);
     }
-  }, [courseId, showError]);
+  }, [courseId, showError, loadModules]);
 
   useEffect(() => {
     if (isEditing && courseId) {
@@ -403,82 +518,57 @@ const CourseBuilder = () => {
   //   return () => clearInterval(autoSaveInterval);
   // }, [hasUnsavedChanges, course, modules]);
 
-  const loadModules = () => {
-    // Mock modules data - In real app, fetch from API
-    const mockModules: Module[] = [
-      {
-        id: '1',
-        title: 'Introduction',
-        description: 'Les bases du cours',
-        order: 1,
-        duration: 45,
-        isActive: true,
-        lessons: [
-          {
-            id: '1-1',
-            title: 'Présentation du cours',
-            description: 'Vue d\'ensemble de ce que vous allez apprendre',
-            order: 1,
-            duration: 15,
-            type: 'video',
-            content: {
-              type: 'video',
-              videoUrl: 'https://example.com/intro.mp4'
-            },
-            resources: [],
-            isFree: true,
-            isActive: true
-          },
-          {
-            id: '1-2',
-            title: 'Configuration de l\'environnement',
-            description: 'Installer et configurer les outils nécessaires',
-            order: 2,
-            duration: 30,
-            type: 'text',
-            content: {
-              type: 'text',
-              textContent: 'Guide d\'installation...'
-            },
-            resources: ['https://example.com/setup-guide.pdf'],
-            isFree: false,
-            isActive: true
-          }
-        ]
-      },
-      {
-        id: '2',
-        title: 'Les fondamentaux',
-        description: 'Concepts de base essentiels',
-        order: 2,
-        duration: 120,
-        isActive: true,
-        lessons: []
-      }
-    ];
-    
-    setModules(mockModules);
-  };
 
   const handleSaveCourse = async () => {
     try {
       setSaving(true);
-      
+
       // Uploader tous les fichiers locaux d'abord
-      await uploadPendingFiles();
-      
+      const uploadResult = await uploadPendingFiles();
+
+      let savedCourse: Course;
+
+      // Préparer les données pour le backend
+      const backendCourseData = {
+        title: course.title || '',
+        description: course.description || '',
+        category: course.category || 'other',
+        level: course.level || 'beginner',
+        price: course.price || 0,
+        thumbnail: uploadResult.thumbnailUrl || course.thumbnailUrl || '',
+        tags: course.tags || [],
+        status: (course.isPublished ? 'published' : 'draft') as 'draft' | 'published' | 'archived'
+      };
+
       if (isEditing) {
-        await courseService.updateCourse(courseId!, course);
+        savedCourse = await courseService.updateCourse(courseId!, backendCourseData);
         success('Cours modifié', 'Cours modifié avec succès');
       } else {
-        const newCourse = await courseService.createCourse(course as CreateCourseDto);
+        savedCourse = await courseService.createCourse(backendCourseData as CreateCourseDto);
         success('Cours créé', 'Cours créé avec succès');
-        navigate(`/dashboard/instructor/course-builder/${newCourse.id}`);
+        setCourse(prevCourse => ({ ...prevCourse, id: savedCourse.id }));
       }
-      
+
+      // Sauvegarder les modules et leçons
+      const savedCourseId = savedCourse.id || (savedCourse as { _id?: string })._id;
+      console.log('🔍 CourseBuilder - savedCourse:', savedCourse);
+      console.log('🔍 CourseBuilder - courseId pour modules:', savedCourseId);
+
+      if (!savedCourseId) {
+        throw new Error('ID du cours non trouvé après sauvegarde');
+      }
+
+      await saveModulesAndLessons(savedCourseId);
+
       setHasUnsavedChanges(false);
-    } catch {
-      showError('Erreur de sauvegarde', 'Erreur lors de la sauvegarde');
+
+      if (!isEditing) {
+        // Rediriger vers la liste des cours après publication
+        navigate('/dashboard/instructor/courses');
+      }
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error);
+      showError('Erreur de sauvegarde', 'Erreur lors de la sauvegarde du cours');
     } finally {
       setSaving(false);
     }
@@ -486,18 +576,20 @@ const CourseBuilder = () => {
 
   const uploadPendingFiles = async () => {
     const uploadsPromises: Promise<void>[] = [];
-    
+    let uploadedThumbnailUrl = course.thumbnailUrl;
+
     // Upload de l'image de couverture si elle est locale
     if (course.localThumbnail) {
-      const thumbnailUploadPromise = mediaService.uploadImage(course.localThumbnail.file)
-        .then((uploadedImage: UploadedFile) => {
+      const thumbnailUploadPromise = mediaService.uploadFile(course.localThumbnail.file)
+        .then((uploadedImage) => {
+          uploadedThumbnailUrl = uploadedImage.url;
           // Mettre à jour les données du cours avec l'URL de l'image uploadée
           setCourse(prevCourse => ({
             ...prevCourse,
             thumbnailUrl: uploadedImage.url,
             localThumbnail: null
           }));
-          
+
           // Nettoyer l'URL locale
           URL.revokeObjectURL(course.localThumbnail!.preview);
         });
@@ -507,17 +599,48 @@ const CourseBuilder = () => {
     // Parcourir tous les modules et leçons pour trouver les fichiers locaux
     modules.forEach(module => {
       module.lessons.forEach(lesson => {
+        // Upload des documents normaux
         if (lesson.content.localDocument) {
+          console.log('📄 Upload document - leçon:', lesson.title, 'fichier:', lesson.content.localDocument);
           const uploadPromise = mediaService.uploadDocument(lesson.content.localDocument.file)
             .then(uploadedFile => {
+              console.log('📄 Document uploadé avec succès:', uploadedFile);
               // Mettre à jour les données de la leçon avec l'URL du fichier uploadé
               lesson.content.documentUrl = uploadedFile.url;
-              lesson.content.documentName = uploadedFile.originalname;
+              lesson.content.documentName = uploadedFile.originalName;
               lesson.content.documentType = uploadedFile.mimetype;
-              
+
               // Nettoyer le fichier local
               URL.revokeObjectURL(lesson.content.localDocument!.preview);
               delete lesson.content.localDocument;
+            })
+            .catch(error => {
+              console.error('❌ Erreur upload document:', error);
+              throw error;
+            });
+          uploadsPromises.push(uploadPromise);
+        }
+
+        // Upload des documents d'instructions pour les devoirs (assignments)
+        if (lesson.type === 'assignment' && lesson.content.assignmentData?.localInstructionDocument) {
+          console.log('📄 Upload document devoir - leçon:', lesson.title, 'fichier:', lesson.content.assignmentData.localInstructionDocument);
+          const uploadPromise = mediaService.uploadDocument(lesson.content.assignmentData.localInstructionDocument.file)
+            .then(uploadedFile => {
+              console.log('📄 Document devoir uploadé avec succès:', uploadedFile);
+              // Mettre à jour les données du devoir avec l'URL du fichier uploadé
+              if (lesson.content.assignmentData) {
+                lesson.content.assignmentData.instructionDocumentUrl = uploadedFile.url;
+                lesson.content.assignmentData.instructionDocumentName = uploadedFile.originalName;
+                lesson.content.assignmentData.instructionDocumentType = uploadedFile.mimetype;
+
+                // Nettoyer le fichier local
+                URL.revokeObjectURL(lesson.content.assignmentData.localInstructionDocument!.preview);
+                delete lesson.content.assignmentData.localInstructionDocument;
+              }
+            })
+            .catch(error => {
+              console.error('❌ Erreur upload document devoir:', error);
+              throw error;
             });
           uploadsPromises.push(uploadPromise);
         }
@@ -525,7 +648,7 @@ const CourseBuilder = () => {
         // Upload des images locales du RichTextEditor
         if (lesson.content.localImages && lesson.content.localImages.length > 0) {
           lesson.content.localImages.forEach(localImage => {
-            const imageUploadPromise = mediaService.uploadImage(localImage.file)
+            const imageUploadPromise = mediaService.uploadFile(localImage.file)
               .then(uploadedImage => {
                 console.log('🖼️ CourseBuilder - Remplacement URL dans contenu:', {
                   localUrl: localImage.localUrl,
@@ -557,29 +680,131 @@ const CourseBuilder = () => {
       await Promise.all(uploadsPromises);
       success('Upload terminé', 'Fichiers uploadés avec succès');
     }
+
+    return { thumbnailUrl: uploadedThumbnailUrl };
+  };
+
+  const saveModulesAndLessons = async (courseId: string) => {
+    try {
+      console.log('🎯 saveModulesAndLessons - courseId reçu:', courseId);
+      console.log('🎯 saveModulesAndLessons - modules à sauvegarder:', modules.length);
+
+      // Sauvegarder tous les modules
+      const modulePromises = modules.map(async (module, index) => {
+        const moduleData = {
+          title: module.title,
+          description: module.description,
+          courseId: courseId,
+          order: index,
+          duration: module.duration,
+          isActive: module.isActive
+        };
+
+        console.log('📦 Module à sauvegarder:', moduleData);
+
+        let savedModule;
+        if (module.id && module.id.startsWith('module-')) {
+          // Nouveau module à créer
+          savedModule = await moduleService.createModule(moduleData);
+          console.log('📦 Nouveau module créé:', savedModule);
+        } else if (module.id) {
+          // Module existant à mettre à jour
+          savedModule = await moduleService.updateModule(module.id, moduleData);
+          console.log('📦 Module mis à jour:', savedModule);
+        } else {
+          // Module sans ID, créer nouveau
+          savedModule = await moduleService.createModule(moduleData);
+          console.log('📦 Module sans ID créé:', savedModule);
+        }
+
+        // Sauvegarder les leçons de ce module
+        if (module.lessons.length > 0) {
+          const lessonPromises = module.lessons.map(async (lesson, lessonIndex) => {
+            console.log('🎯 Module ID pour leçons:', savedModule.id || (savedModule as { _id?: string })._id);
+
+            const moduleId = savedModule.id || (savedModule as { _id?: string })._id;
+            const lessonData = lessonService.convertToCreateDto({
+              ...lesson,
+              moduleId: moduleId,
+              order: lessonIndex
+            });
+
+            console.log('📝 Leçon à sauvegarder:', lessonData);
+
+            if (lesson.id && lesson.id.startsWith('lesson-')) {
+              // Nouvelle leçon à créer
+              return await lessonService.createLesson(lessonData);
+            } else if (lesson.id) {
+              // Leçon existante à mettre à jour
+              return await lessonService.updateLesson(lesson.id, lessonData);
+            } else {
+              // Leçon sans ID, créer nouvelle
+              return await lessonService.createLesson(lessonData);
+            }
+          });
+
+          await Promise.all(lessonPromises);
+        }
+
+        return savedModule;
+      });
+
+      await Promise.all(modulePromises);
+      info('Sauvegarde complète', 'Modules et leçons sauvegardés avec succès');
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde des modules:', error);
+      showError('Erreur modules', 'Erreur lors de la sauvegarde des modules et leçons');
+      throw error;
+    }
   };
 
   const handleSaveAsDraft = async () => {
     try {
+      setSaving(true);
+
       // Uploader tous les fichiers locaux d'abord
-      await uploadPendingFiles();
-      
-      // Prepare course data for draft save (remove properties not accepted by server)
-      const { isPublished, thumbnailPreview, localThumbnail, ...draftCourse } = course;
-      
+      const uploadResult = await uploadPendingFiles();
+
+      // Préparer les données pour le backend (brouillon)
+      const backendCourseData = {
+        title: course.title || '',
+        description: course.description || '',
+        category: course.category || 'other',
+        level: course.level || 'beginner',
+        price: course.price || 0,
+        thumbnail: uploadResult.thumbnailUrl || course.thumbnailUrl || '',
+        tags: course.tags || [],
+        status: 'draft' as const // Toujours en brouillon
+      };
+
+      let savedCourse: Course;
       if (isEditing) {
-        await courseService.updateCourse(courseId!, draftCourse);
+        savedCourse = await courseService.updateCourse(courseId!, backendCourseData);
       } else {
-        await courseService.createCourse(draftCourse as CreateCourseDto);
+        savedCourse = await courseService.createCourse(backendCourseData as CreateCourseDto);
+        setCourse(prevCourse => ({ ...prevCourse, id: savedCourse.id }));
       }
-      
+
+      // Sauvegarder les modules et leçons
+      const savedCourseId = savedCourse.id || (savedCourse as { _id?: string })._id;
+      console.log('🔍 CourseBuilder DRAFT - savedCourse:', savedCourse);
+      console.log('🔍 CourseBuilder DRAFT - courseId pour modules:', savedCourseId);
+
+      if (!savedCourseId) {
+        throw new Error('ID du cours non trouvé après sauvegarde (draft)');
+      }
+
+      await saveModulesAndLessons(savedCourseId);
+
       setHasUnsavedChanges(false);
-      success('Brouillon sauvegardé', 'Brouillon sauvegardé');
+      success('Brouillon sauvegardé', 'Brouillon sauvegardé avec modules et leçons');
       return true;
     } catch (error) {
       console.error('Draft save failed:', error);
       showError('Erreur de brouillon', 'Erreur lors de la sauvegarde du brouillon');
       return false;
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -755,7 +980,7 @@ const CourseBuilder = () => {
             onUpdateLesson={(updatedLesson) => {
               setModules(modules.map(m => {
                 if (m.id === module.id) {
-                  const updatedLessons = m.lessons.map(l => l.id === updatedLesson.id ? updatedLesson : l);
+                  const updatedLessons = m.lessons.map(l => l.id === updatedLesson.id ? updatedLesson as Lesson : l);
                   return {
                     ...m,
                     lessons: updatedLessons,
@@ -798,6 +1023,17 @@ const CourseBuilder = () => {
     
     return parts.join(' / ');
   };
+
+  // Render course preview if preview mode is active
+  if (showPreview) {
+    return (
+      <CoursePreview 
+        course={course}
+        modules={modules}
+        onClose={() => setShowPreview(false)}
+      />
+    );
+  }
 
   return (
     <>
@@ -858,7 +1094,11 @@ const CourseBuilder = () => {
                   {course.isPublished ? 'Publié' : 'Brouillon'}
                 </Badge>
                 
-                <Button variant="outline" size="sm">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handlePreviewCourse}
+                >
                   <Eye color="#6B7280" size={16} className="mr-2" />
                   Prévisualiser
                 </Button>
