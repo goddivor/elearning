@@ -21,9 +21,21 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const AdminUsers = () => {
   useTitle("Gestion des Utilisateurs");
-  
+
   const toast = useToast();
   const { user: currentUser } = useAuth();
+
+
+  // Fonction utilitaire pour obtenir l'ID du currentUser
+  const getCurrentUserId = () => {
+    return currentUser?._id || (currentUser as any)?.id;
+  };
+
+  // Fonction utilitaire pour vérifier si un utilisateur est l'admin connecté
+  const isCurrentUser = (userId: string) => {
+    const currentUserId = getCurrentUserId();
+    return userId === currentUserId;
+  };
   const userFormModalRef = useRef<ModalRef>(null);
   const userDetailsModalRef = useRef<ModalRef>(null);
   const confirmationModalRef = useRef<ModalRef>(null);
@@ -59,6 +71,7 @@ const AdminUsers = () => {
       setLoading(true);
       const data = await userService.getAllUsers();
       setUsers(data);
+
     } catch (error) {
       console.error('Erreur lors du chargement des utilisateurs:', error);
     } finally {
@@ -67,10 +80,19 @@ const AdminUsers = () => {
   };
 
   const handleToggleUserStatus = async (userId: string, isActive: boolean) => {
+    // Empêcher l'admin de modifier son propre statut
+    if (isCurrentUser(userId)) {
+      toast.warning(
+        'Action non autorisée',
+        'Vous ne pouvez pas modifier le statut de votre propre compte'
+      );
+      return;
+    }
+
     try {
       const user = users.find(u => u.id === userId);
       if (!user) return;
-      
+
       if (isActive) {
         await userService.deactivateUser(userId);
         toast.success(
@@ -94,6 +116,15 @@ const AdminUsers = () => {
 
 
   const handleDeleteUser = (userId: string) => {
+    // Empêcher l'admin de supprimer son propre compte
+    if (isCurrentUser(userId)) {
+      toast.warning(
+        'Action non autorisée',
+        'Vous ne pouvez pas supprimer votre propre compte'
+      );
+      return;
+    }
+
     const user = users.find(u => u.id === userId);
     if (!user) return;
 
@@ -133,6 +164,11 @@ const AdminUsers = () => {
           email: userData.email,
           role: userData.role,
         };
+
+        // Include password if resetPassword is true
+        if (userData.resetPassword && userData.password) {
+          updateData.password = userData.password;
+        }
         await userService.updateUser(userToEdit.id, updateData);
         toast.success(
           'Utilisateur modifié',
@@ -230,7 +266,7 @@ const AdminUsers = () => {
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       const selectableUsers = filteredUsers
-        .filter(user => user.id !== currentUser?._id)
+        .filter(user => !isCurrentUser(user.id))
         .map(user => user.id);
       setSelectedUsers(selectableUsers);
     } else {
@@ -419,7 +455,7 @@ const AdminUsers = () => {
       title: (
         <input
           type="checkbox"
-          checked={selectedUsers.length > 0 && selectedUsers.length === filteredUsers.filter(u => u.id !== currentUser?._id).length}
+          checked={selectedUsers.length > 0 && selectedUsers.length === filteredUsers.filter(u => !isCurrentUser(u.id)).length}
           onChange={(e) => handleSelectAll(e.target.checked)}
           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
         />
@@ -436,9 +472,9 @@ const AdminUsers = () => {
               setSelectedUsers(selectedUsers.filter(id => id !== user.id));
             }
           }}
-          disabled={user.id === currentUser?._id}
+          disabled={isCurrentUser(user.id)}
           className={`rounded border-gray-300 text-blue-600 focus:ring-blue-500 ${
-            user.id === currentUser?._id ? 'opacity-50 cursor-not-allowed' : ''
+            isCurrentUser(user.id) ? 'opacity-50 cursor-not-allowed' : ''
           }`}
         />
       )
@@ -489,8 +525,11 @@ const AdminUsers = () => {
           onClick={() => handleToggleUserStatus(user.id, isActive)}
           variant="ghost"
           size="sm"
+          disabled={isCurrentUser(user.id)}
+          className={isCurrentUser(user.id) ? 'cursor-not-allowed opacity-50' : ''}
+          title={isCurrentUser(user.id) ? 'Vous ne pouvez pas modifier le statut de votre propre compte' : undefined}
         >
-          <Badge 
+          <Badge
             variant={isActive ? 'success' : 'default'}
             size="sm"
           >
@@ -536,18 +575,18 @@ const AdminUsers = () => {
             variant="ghost"
             size="sm"
             className={`p-2 rounded-lg ${
-              user.id === currentUser?._id
+              isCurrentUser(user.id)
                 ? "text-gray-400 cursor-not-allowed"
                 : user.isActive
                   ? "text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50"
                   : "text-green-600 hover:text-green-800 hover:bg-green-50"
             }`}
             title={
-              user.id === currentUser?._id
+              isCurrentUser(user.id)
                 ? "Vous ne pouvez pas modifier le statut de votre propre compte"
                 : user.isActive ? "Désactiver" : "Activer"
             }
-            disabled={user.id === currentUser?._id}
+            disabled={isCurrentUser(user.id)}
           >
             {user.isActive ? (
               <Status size={16} color="currentColor" />
@@ -561,12 +600,12 @@ const AdminUsers = () => {
             variant="ghost"
             size="sm"
             className={`p-2 rounded-lg ${
-              user.id === currentUser?._id
-                ? "text-gray-400 cursor-not-allowed" 
+              isCurrentUser(user.id)
+                ? "text-gray-400 cursor-not-allowed"
                 : "text-red-600 hover:text-red-800 hover:bg-red-50"
             }`}
-            title={user.id === currentUser?._id ? "Vous ne pouvez pas supprimer votre propre compte" : "Supprimer"}
-            disabled={user.id === currentUser?._id}
+            title={isCurrentUser(user.id) ? "Vous ne pouvez pas supprimer votre propre compte" : "Supprimer"}
+            disabled={isCurrentUser(user.id)}
           >
             <Trash size={16} color="currentColor" />
           </Button>
