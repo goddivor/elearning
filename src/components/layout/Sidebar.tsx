@@ -10,9 +10,7 @@ import {
   BookSaved,
   Medal,
   Video,
-  Profile2User,
-  UserAdd
-} from 'iconsax-react';
+  Profile2User} from 'iconsax-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -29,9 +27,31 @@ interface SidebarItem {
 
 function SidebarNavItem({ item }: { item: SidebarItem }) {
   const { pathname } = useLocation();
-  // Fix for dashboard route conflicts
-  const isActive = pathname === item.href || 
-    (item.href !== '/dashboard/admin' && pathname.startsWith(`${item.href}/`));
+
+  // Improved active state logic
+  const isActive = (() => {
+    // Exact match for root dashboard routes
+    if (item.href === '/dashboard/admin' ||
+        item.href === '/dashboard/instructor' ||
+        item.href === '/student/dashboard') {
+      return pathname === item.href;
+    }
+
+    // For other routes, check if pathname starts with the item href
+    // but make sure it's not conflicting with other similar routes
+    if (pathname === item.href) {
+      return true;
+    }
+
+    // Special handling for course-related routes
+    if (item.href === '/dashboard/instructor/courses') {
+      return pathname === '/dashboard/instructor/courses' ||
+             pathname.startsWith('/dashboard/instructor/course-builder');
+    }
+
+    return pathname.startsWith(`${item.href}/`);
+  })();
+
   const Icon = item.icon;
 
   return (
@@ -110,24 +130,19 @@ const Sidebar = () => {
             href: '/dashboard/instructor/courses'
           },
           {
-            title: 'Créer un Cours',
-            icon: UserAdd,
-            href: '/dashboard/instructor/create-course'
-          },
-          {
             title: 'Mes Étudiants',
             icon: Profile2User,
             href: '/dashboard/instructor/students'
           },
           {
-            title: 'Bibliothèque',
-            icon: Video,
-            href: '/dashboard/instructor/library'
-          },
-          {
             title: 'Analytics',
             icon: Chart,
             href: '/dashboard/instructor/analytics'
+          },
+          {
+            title: 'Bibliothèque',
+            icon: Video,
+            href: '/dashboard/instructor/library'
           },
           {
             title: 'Paramètres',
