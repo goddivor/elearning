@@ -38,6 +38,7 @@ export interface UpdateUserDto {
   firstName?: string;
   lastName?: string;
   role?: 'admin' | 'instructor' | 'student';
+  password?: string;
 }
 
 class UserService {

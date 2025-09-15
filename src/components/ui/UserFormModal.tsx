@@ -1,5 +1,5 @@
 import { forwardRef, useImperativeHandle, useState, useEffect } from 'react';
-import { Profile, Save2, UserAdd} from 'iconsax-react';
+import { Profile, Save2, UserAdd, Eye, EyeSlash, Refresh } from 'iconsax-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
@@ -18,6 +18,7 @@ export interface UserFormData {
   email: string;
   password?: string;
   role: 'admin' | 'instructor' | 'student';
+  resetPassword?: boolean;
 }
 
 interface User {
@@ -42,10 +43,52 @@ const UserFormModal = forwardRef<ModalRef, UserFormModalProps>(
       email: '',
       password: '',
       role: 'student',
+      resetPassword: false,
     });
     const [errors, setErrors] = useState<Partial<UserFormData>>({});
+    const [showPassword, setShowPassword] = useState(false);
 
     const isEditMode = !!user;
+
+    // Fonction pour générer un mot de passe aléatoire
+    const generateRandomPassword = (): string => {
+      const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+      const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      const numbers = '0123456789';
+      const symbols = '!@#$%&*';
+
+      const allChars = lowercase + uppercase + numbers + symbols;
+      let password = '';
+
+      // Assurer au moins un caractère de chaque type
+      password += lowercase[Math.floor(Math.random() * lowercase.length)];
+      password += uppercase[Math.floor(Math.random() * uppercase.length)];
+      password += numbers[Math.floor(Math.random() * numbers.length)];
+      password += symbols[Math.floor(Math.random() * symbols.length)];
+
+      // Compléter jusqu'à 12 caractères
+      for (let i = 4; i < 12; i++) {
+        password += allChars[Math.floor(Math.random() * allChars.length)];
+      }
+
+      // Mélanger les caractères
+      return password.split('').sort(() => Math.random() - 0.5).join('');
+    };
+
+    const handleGeneratePassword = () => {
+      const newPassword = generateRandomPassword();
+      setFormData(prev => ({
+        ...prev,
+        password: newPassword
+      }));
+      // Effacer l'erreur de mot de passe s'il y en avait une
+      if (errors.password) {
+        setErrors(prev => ({
+          ...prev,
+          password: undefined
+        }));
+      }
+    };
 
     useImperativeHandle(ref, () => ({
       open: () => setIsOpen(true),
@@ -62,6 +105,8 @@ const UserFormModal = forwardRef<ModalRef, UserFormModalProps>(
             lastName: user.lastName,
             email: user.email,
             role: user.role,
+            resetPassword: false,
+            password: '',
           });
         } else {
           // Create mode - reset form
@@ -71,18 +116,29 @@ const UserFormModal = forwardRef<ModalRef, UserFormModalProps>(
             email: '',
             password: '',
             role: 'student',
+            resetPassword: false,
           });
         }
         setErrors({});
+        setShowPassword(false);
       }
     }, [isOpen, user]);
 
-    const handleInputChange = (field: keyof UserFormData, value: string) => {
+    const handleInputChange = (field: keyof UserFormData, value: string | boolean) => {
       setFormData(prev => ({
         ...prev,
         [field]: value,
       }));
-      
+
+      // Si on décoche "modifier le mot de passe", effacer le mot de passe
+      if (field === 'resetPassword' && !value) {
+        setFormData(prev => ({
+          ...prev,
+          password: '',
+          resetPassword: false,
+        }));
+      }
+
       // Clear error when user starts typing
       if (errors[field]) {
         setErrors(prev => ({
@@ -109,11 +165,12 @@ const UserFormModal = forwardRef<ModalRef, UserFormModalProps>(
         newErrors.email = 'Format d\'email invalide';
       }
 
-      if (!isEditMode && !formData.password?.trim()) {
+      // Validation du mot de passe pour création ou modification avec reset
+      if ((!isEditMode || (isEditMode && formData.resetPassword)) && !formData.password?.trim()) {
         newErrors.password = 'Le mot de passe est requis';
       }
 
-      if (!isEditMode && formData.password && formData.password.length < 6) {
+      if ((!isEditMode || (isEditMode && formData.resetPassword)) && formData.password && formData.password.length < 6) {
         newErrors.password = 'Le mot de passe doit contenir au moins 6 caractères';
       }
 
@@ -245,15 +302,91 @@ const UserFormModal = forwardRef<ModalRef, UserFormModalProps>(
           
           {!isEditMode && (
             <div>
-              <Input
-            type="password"
-            label="Mot de passe *"
-            placeholder="Mot de passe (min 6 caractères)"
-            value={formData.password}
-            onChange={(e) => handleInputChange('password', e.target.value)}
-              />
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  label="Mot de passe *"
+                  placeholder="Mot de passe (min 6 caractères)"
+                  value={formData.password}
+                  onChange={(e) => handleInputChange('password', e.target.value)}
+                />
+                <div className="absolute right-3 top-8 flex items-center space-x-2">
+                  <button
+                    type="button"
+                    onClick={handleGeneratePassword}
+                    className="p-1 text-blue-600 hover:text-blue-800 rounded"
+                    title="Générer un mot de passe aléatoire"
+                  >
+                    <Refresh size={16} color="#2563EB" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="p-1 text-gray-400 hover:text-gray-600"
+                    title={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                  >
+                    {showPassword ? <EyeSlash size={16} color="#6B7280" /> : <Eye size={16} color="#6B7280" />}
+                  </button>
+                </div>
+              </div>
               {errors.password && (
-            <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+                <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+              )}
+            </div>
+          )}
+
+          {/* Section de réinitialisation du mot de passe pour modification */}
+          {isEditMode && (
+            <div className="border border-orange-200 rounded-lg p-4 bg-orange-50">
+              <div className="flex items-center space-x-2 mb-3">
+                <input
+                  type="checkbox"
+                  id="resetPassword"
+                  checked={formData.resetPassword}
+                  onChange={(e) => handleInputChange('resetPassword', e.target.checked)}
+                  className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                />
+                <label htmlFor="resetPassword" className="text-sm font-medium text-orange-900">
+                  Modifier le mot de passe
+                </label>
+              </div>
+
+              {formData.resetPassword && (
+                <div className="space-y-3">
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      label="Nouveau mot de passe *"
+                      placeholder="Nouveau mot de passe (min 6 caractères)"
+                      value={formData.password}
+                      onChange={(e) => handleInputChange('password', e.target.value)}
+                    />
+                    <div className="absolute right-3 top-8 flex items-center space-x-2">
+                      <button
+                        type="button"
+                        onClick={handleGeneratePassword}
+                        className="p-1 text-blue-600 hover:text-blue-800 rounded"
+                        title="Générer un mot de passe aléatoire"
+                      >
+                        <Refresh size={16} color="#2563EB" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="p-1 text-gray-400 hover:text-gray-600"
+                        title={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                      >
+                        {showPassword ? <EyeSlash size={16} color="#6B7280" /> : <Eye size={16} color="#6B7280" />}
+                      </button>
+                    </div>
+                  </div>
+                  {errors.password && (
+                    <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+                  )}
+                  <p className="text-xs text-orange-700">
+                    <strong>Note:</strong> L'utilisateur devra utiliser ce nouveau mot de passe lors de sa prochaine connexion.
+                  </p>
+                </div>
               )}
             </div>
           )}
