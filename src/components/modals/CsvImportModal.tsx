@@ -4,7 +4,8 @@ import type { ModalRef } from '@/types/modal-ref';
 import { parseCSV, generateCSVTemplate, type ImportedUser, type ImportResult } from '@/utils/csv-import';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
-import { X, Upload, Download, FileText, CheckCircle, XCircle, Eye } from '@phosphor-icons/react';
+import Tooltip from '@/components/ui/Tooltip';
+import { X, Upload, Download, FileText, CheckCircle, XCircle, Eye, Question } from '@phosphor-icons/react';
 import { useToast } from '@/context/toast-context';
 
 interface CsvImportModalProps {
@@ -211,20 +212,21 @@ const CsvImportModal = forwardRef<ModalRef, CsvImportModalProps>(
                     }}
                     onDragLeave={() => setDragOver(false)}
                   >
-                    <FileText size={48} color="#6B7280" className="mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      Glissez-déposez votre fichier CSV
-                    </h3>
-                    <p className="text-gray-500 mb-4">
-                      ou cliquez pour sélectionner un fichier
-                    </p>
-                    <Button
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isProcessing}
-                      className="mb-4"
-                    >
-                      {isProcessing ? 'Traitement...' : 'Sélectionner un fichier'}
-                    </Button>
+                    <div className="flex flex-col items-center">
+                      <FileText size={48} color="#6B7280" className="mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2 text-center">
+                        Glissez-déposez votre fichier CSV
+                      </h3>
+                      <p className="text-gray-500 mb-4 text-center">
+                        ou cliquez pour sélectionner un fichier
+                      </p>
+                      <Button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isProcessing}
+                      >
+                        {isProcessing ? 'Traitement...' : 'Sélectionner un fichier'}
+                      </Button>
+                    </div>
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -258,7 +260,25 @@ const CsvImportModal = forwardRef<ModalRef, CsvImportModalProps>(
                 </div>
 
                 <div className="space-y-3">
-                  <h4 className="font-medium text-gray-900">Format requis :</h4>
+                  <div className="flex items-center space-x-2">
+                    <h4 className="font-medium text-gray-900">Format requis :</h4>
+                    <Tooltip
+                      content={
+                        <div>
+                          <p className="font-medium mb-1">Mot de passe par défaut :</p>
+                          <p className="font-mono text-sm bg-gray-800 px-2 py-1 rounded">TempPass123!</p>
+                          <p className="text-xs mt-1 text-gray-300">
+                            Tous les comptes créés utiliseront ce mot de passe temporaire
+                          </p>
+                        </div>
+                      }
+                      position="top"
+                    >
+                      <div className="w-4 h-4 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center hover:bg-blue-200 transition-colors cursor-help">
+                        <Question size={12} weight="bold" />
+                      </div>
+                    </Tooltip>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
                       <h5 className="font-medium text-gray-700 mb-2">Colonnes requises :</h5>
