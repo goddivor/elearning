@@ -3,6 +3,7 @@ import LandingPage from "./landing";
 import RootLayout from "../app.layout";
 import DashboardLayout from "../layouts/DashboardLayout";
 import RoleBasedRedirect from "../components/RoleBasedRedirect";
+import ProtectedRoute from "../components/ProtectedRoute";
 import NotFound from "./NotFound";
 import SignIn from "./auth/SignIn";
 import SignUp from "./auth/SignUp";
@@ -44,14 +45,70 @@ const router = createBrowserRouter([
     children: [
       // Redirection selon le rôle utilisateur
       { path: "", element: <RoleBasedRedirect /> },
-      { path: "admin", element: <AdminDashboard /> },
-      { path: "admin/users", element: <AdminUsers /> },
-      { path: "admin/courses", element: <AdminCourses /> },
-      { path: "instructor", element: <InstructorDashboard /> },
-      { path: "instructor/courses", element: <InstructorCourses /> },
-      { path: "instructor/course-builder", element: <CourseBuilder /> },
-      { path: "instructor/course-builder/:courseId", element: <CourseBuilder /> },
-      { path: "student", element: <StudentDashboard /> },
+      {
+        path: "admin",
+        element: (
+          <ProtectedRoute requiredRole="admin">
+            <AdminDashboard />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "admin/users",
+        element: (
+          <ProtectedRoute requiredRole="admin">
+            <AdminUsers />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "admin/courses",
+        element: (
+          <ProtectedRoute requiredRole="admin">
+            <AdminCourses />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "instructor",
+        element: (
+          <ProtectedRoute requiredRole="instructor">
+            <InstructorDashboard />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "instructor/courses",
+        element: (
+          <ProtectedRoute requiredRole="instructor">
+            <InstructorCourses />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "instructor/course-builder",
+        element: (
+          <ProtectedRoute requiredRole="instructor">
+            <CourseBuilder />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "instructor/course-builder/:courseId",
+        element: (
+          <ProtectedRoute requiredRole="instructor">
+            <CourseBuilder />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "student",
+        element: (
+          <ProtectedRoute requiredRole="student">
+            <StudentDashboard />
+          </ProtectedRoute>
+        )
+      },
     ],
   },
 ]);
