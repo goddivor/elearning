@@ -4,6 +4,7 @@ import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import type { ModalRef } from '@/types/modal-ref';
 import { X } from '@phosphor-icons/react';
+import { avatarService } from '@/services/avatarService';
 
 interface User {
   id: string;
@@ -117,7 +118,7 @@ const UserDetailsModal = forwardRef<ModalRef, UserDetailsModalProps>(
                 <div className="flex-shrink-0">
                   {user.avatar ? (
                     <img
-                      src={user.avatar}
+                      src={avatarService.getAvatarUrl(user.avatar)}
                       alt={`${user.firstName} ${user.lastName}`}
                       className="w-20 h-20 rounded-full object-cover border-4 border-blue-100"
                     />

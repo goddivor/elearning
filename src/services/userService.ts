@@ -7,6 +7,7 @@ export interface User {
   lastName: string;
   role: 'admin' | 'instructor' | 'student';
   isActive: boolean;
+  avatar?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -54,9 +55,15 @@ class UserService {
     return response.data;
   }
 
-  // Mettre à jour un utilisateur
+  // Mettre à jour un utilisateur (Admin uniquement)
   async updateUser(id: string, data: UpdateUserDto): Promise<User> {
     const response = await api.put(`/users/${id}`, data);
+    return response.data;
+  }
+
+  // Mettre à jour son propre profil
+  async updateProfile(data: UpdateUserDto): Promise<User> {
+    const response = await api.put('/users/profile', data);
     return response.data;
   }
 

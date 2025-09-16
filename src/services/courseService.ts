@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import api from './api';
 import type { LocalImage } from '@/components/ui/ImageUpload';
 import { getFullFileUrl } from '@/utils/fileUtils';
@@ -10,11 +11,12 @@ export interface Course {
   level: 'beginner' | 'intermediate' | 'advanced';
   price: number;
   isPublished: boolean;
-  instructor: {
+  instructor?: {
     id: string;
     firstName: string;
     lastName: string;
     email: string;
+    avatar?: string;
   };
   thumbnailUrl?: string;
   thumbnailPreview?: string;
@@ -65,22 +67,93 @@ export interface UpdateCourseDto {
   status?: 'draft' | 'published' | 'archived';
 }
 
+export interface CourseBackendResponse {
+  _id?: string;
+  id?: string;
+  title: string;
+  description: string;
+  category: string;
+  level: 'beginner' | 'intermediate' | 'advanced';
+  price: number;
+  tags: string[];
+  thumbnail?: string;
+  thumbnailUrl?: string;
+  previewUrl?: string;
+  status: string;
+  duration: number;
+  totalLessons: number;
+  enrolledStudents: number;
+  averageRating: number;
+  totalReviews: number;
+  createdAt: string;
+  updatedAt: string;
+  instructorId?: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    avatar?: string;
+  };
+  instructor?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    avatar?: string;
+  };
+}
+
 class CourseService {
   // Récupérer tous les cours (admin)
   async getAllCourses(): Promise<Course[]> {
-    const response = await api.get('/courses');
-    return response.data;
+    const [coursesResponse, usersResponse] = await Promise.all([
+      api.get('/courses?admin=true'),
+      api.get('/users')
+    ]);
+
+    // Créer un map des utilisateurs par ID pour la jointure
+    const usersMap = new Map();
+    usersResponse.data.forEach((user: any) => {
+      usersMap.set(user._id || user.id, user);
+    });
+
+    // Transformer les données backend vers frontend avec jointure
+    return coursesResponse.data.map((course: CourseBackendResponse) => {
+      // Récupérer les données complètes de l'instructeur
+      const instructorData = course.instructorId ? usersMap.get(course.instructorId._id) : null;
+
+      return {
+        ...course,
+        id: course._id || course.id || '',
+        instructor: instructorData ? {
+          id: instructorData._id || instructorData.id,
+          firstName: instructorData.firstName,
+          lastName: instructorData.lastName,
+          email: instructorData.email,
+          avatar: instructorData.avatar
+        } : course.instructor || undefined,
+        thumbnailUrl: getFullFileUrl(course.thumbnail || course.thumbnailUrl),
+        isPublished: course.status === 'published'
+      };
+    });
   }
 
   // Récupérer un cours par ID
   async getCourseById(id: string): Promise<Course> {
     const response = await api.get(`/courses/${id}`);
-    const courseData = response.data;
+    const courseData: CourseBackendResponse = response.data;
 
     // Transformer les données backend vers frontend
     return {
       ...courseData,
-      id: courseData._id || courseData.id,
+      id: courseData._id || courseData.id || '',
+      instructor: courseData.instructorId ? {
+        id: courseData.instructorId._id,
+        firstName: courseData.instructorId.firstName,
+        lastName: courseData.instructorId.lastName,
+        email: courseData.instructorId.email,
+        avatar: courseData.instructorId.avatar
+      } : courseData.instructor || undefined,
       thumbnailUrl: getFullFileUrl(courseData.thumbnail || courseData.thumbnailUrl),
       isPublished: courseData.status === 'published'
     };
@@ -89,12 +162,19 @@ class CourseService {
   // Créer un nouveau cours
   async createCourse(data: CreateCourseDto): Promise<Course> {
     const response = await api.post('/courses', data);
-    const courseData = response.data;
+    const courseData: CourseBackendResponse = response.data;
 
     // Transformer les données backend vers frontend
     return {
       ...courseData,
-      id: courseData._id || courseData.id,
+      id: courseData._id || courseData.id || '',
+      instructor: courseData.instructorId ? {
+        id: courseData.instructorId._id,
+        firstName: courseData.instructorId.firstName,
+        lastName: courseData.instructorId.lastName,
+        email: courseData.instructorId.email,
+        avatar: courseData.instructorId.avatar
+      } : courseData.instructor || undefined,
       thumbnailUrl: getFullFileUrl(courseData.thumbnail || courseData.thumbnailUrl),
       isPublished: courseData.status === 'published'
     };
@@ -103,12 +183,19 @@ class CourseService {
   // Mettre à jour un cours
   async updateCourse(id: string, data: UpdateCourseDto): Promise<Course> {
     const response = await api.patch(`/courses/${id}`, data);
-    const courseData = response.data;
+    const courseData: CourseBackendResponse = response.data;
 
     // Transformer les données backend vers frontend
     return {
       ...courseData,
-      id: courseData._id || courseData.id,
+      id: courseData._id || courseData.id || '',
+      instructor: courseData.instructorId ? {
+        id: courseData.instructorId._id,
+        firstName: courseData.instructorId.firstName,
+        lastName: courseData.instructorId.lastName,
+        email: courseData.instructorId.email,
+        avatar: courseData.instructorId.avatar
+      } : courseData.instructor || undefined,
       thumbnailUrl: getFullFileUrl(courseData.thumbnail || courseData.thumbnailUrl),
       isPublished: courseData.status === 'published'
     };
@@ -122,12 +209,19 @@ class CourseService {
   // Publier/Dépublier un cours
   async togglePublishCourse(id: string): Promise<Course> {
     const response = await api.patch(`/courses/${id}/publish`);
-    const courseData = response.data;
+    const courseData: CourseBackendResponse = response.data;
 
     // Transformer les données backend vers frontend
     return {
       ...courseData,
-      id: courseData._id || courseData.id,
+      id: courseData._id || courseData.id || '',
+      instructor: courseData.instructorId ? {
+        id: courseData.instructorId._id,
+        firstName: courseData.instructorId.firstName,
+        lastName: courseData.instructorId.lastName,
+        email: courseData.instructorId.email,
+        avatar: courseData.instructorId.avatar
+      } : courseData.instructor || undefined,
       thumbnailUrl: getFullFileUrl(courseData.thumbnail || courseData.thumbnailUrl),
       isPublished: courseData.status === 'published'
     };
@@ -141,9 +235,16 @@ class CourseService {
     const response = await api.get(endpoint);
 
     // Transformer les données backend vers frontend
-    return response.data.map((course: Course & { _id?: string; thumbnail?: string; status?: string }) => ({
+    return response.data.map((course: CourseBackendResponse) => ({
       ...course,
-      id: course._id || course.id,
+      id: course._id || course.id || '',
+      instructor: course.instructorId ? {
+        id: course.instructorId._id,
+        firstName: course.instructorId.firstName,
+        lastName: course.instructorId.lastName,
+        email: course.instructorId.email,
+        avatar: course.instructorId.avatar
+      } : course.instructor || undefined,
       thumbnailUrl: getFullFileUrl(course.thumbnail || course.thumbnailUrl),
       isPublished: course.status === 'published'
     }));
@@ -169,8 +270,10 @@ class CourseService {
           return acc;
         }, {} as { [key: string]: number }),
         coursesByInstructor: courses.reduce((acc, course) => {
-          const instructorName = `${course.instructor.firstName} ${course.instructor.lastName}`;
-          acc[instructorName] = (acc[instructorName] || 0) + 1;
+          if (course.instructor && course.instructor.firstName && course.instructor.lastName) {
+            const instructorName = `${course.instructor.firstName} ${course.instructor.lastName}`;
+            acc[instructorName] = (acc[instructorName] || 0) + 1;
+          }
           return acc;
         }, {} as { [key: string]: number })
       };

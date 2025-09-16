@@ -7,6 +7,7 @@ import DataTable, { type Column } from '@/components/ui/DataTable';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import { userService, type User, type UserStats } from '@/services/userService';
+import { avatarService } from '@/services/avatarService';
 
 const AdminDashboard = () => {
   useTitle("Dashboard Admin");
@@ -54,10 +55,20 @@ const AdminDashboard = () => {
       title: 'Nom complet',
       render: (_, user) => (
         <div className="flex items-center">
-          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-            <span className="text-sm font-medium text-blue-600">
-              {user.firstName[0]}{user.lastName[0]}
-            </span>
+          <div className="w-8 h-8 rounded-full mr-3 overflow-hidden">
+            {user.avatar ? (
+              <img
+                src={avatarService.getAvatarUrl(user.avatar)}
+                alt={`${user.firstName} ${user.lastName}`}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-blue-100 flex items-center justify-center">
+                <span className="text-sm font-medium text-blue-600">
+                  {user.firstName[0]}{user.lastName[0]}
+                </span>
+              </div>
+            )}
           </div>
           <div>
             <div className="text-sm font-medium text-gray-900">

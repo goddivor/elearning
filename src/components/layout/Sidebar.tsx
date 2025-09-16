@@ -25,6 +25,7 @@ interface SidebarItem {
   badge?: number;
 }
 
+
 function SidebarNavItem({ item }: { item: SidebarItem }) {
   const { pathname } = useLocation();
 
@@ -58,22 +59,24 @@ function SidebarNavItem({ item }: { item: SidebarItem }) {
     <Link
       to={item.href}
       className={cn(
-        "flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors",
+        "flex items-center transition-colors rounded-lg relative group",
+        "lg:justify-between lg:px-4 lg:py-3 justify-center px-3 py-3 mx-2",
         isActive
           ? "bg-blue-50 text-blue-700 border-r-2 border-blue-700"
           : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
       )}
     >
-      <div className="flex items-center space-x-3">
+      <div className="lg:flex lg:items-center lg:space-x-3 flex items-center justify-center">
         <Icon
           size={20}
           color={isActive ? "#1D4ED8" : "#6B7280"}
           variant={isActive ? "Bold" : "Outline"}
         />
-        <span>{item.title}</span>
+        <span className="text-sm font-medium hidden lg:block">{item.title}</span>
       </div>
+
       {item.badge && (
-        <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-600 rounded-full">
+        <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-600 rounded-full hidden lg:inline">
           {item.badge}
         </span>
       )}
@@ -83,7 +86,7 @@ function SidebarNavItem({ item }: { item: SidebarItem }) {
 
 const Sidebar = () => {
   const { user } = useAuth();
-  
+
   const userRole = user?.role || 'student';
 
   const getMenuItems = (): SidebarItem[] => {
@@ -191,30 +194,30 @@ const Sidebar = () => {
   const menuItems = getMenuItems();
 
   return (
-    <aside className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200 overflow-y-auto">
-      <div className="p-4">
-        {/* Section Header */}
-        <div className="mb-6">
+    <aside className="fixed left-0 top-16 h-[calc(100vh-4rem)] bg-white border-r border-gray-200 overflow-y-auto transition-all duration-300 lg:w-64 w-16">
+      <div className="lg:p-4 p-2">
+        {/* Section Header - Only visible on large screens */}
+        <div className="mb-6 hidden lg:block">
           <h2 className="text-lg font-semibold text-gray-900">
-            {userRole === 'admin' ? 'Administration' : 
+            {userRole === 'admin' ? 'Administration' :
              userRole === 'instructor' ? 'Instructeur' : 'Étudiant'}
           </h2>
           <p className="text-sm text-gray-500">
-            {userRole === 'admin' ? 'Gestion de la plateforme' : 
+            {userRole === 'admin' ? 'Gestion de la plateforme' :
              userRole === 'instructor' ? 'Gestion des cours' : 'Mon apprentissage'}
           </p>
         </div>
 
         {/* Navigation Menu */}
-        <nav className="space-y-1">
+        <nav className="lg:space-y-1 space-y-2">
           {menuItems.map((item) => (
             <SidebarNavItem key={item.href} item={item} />
           ))}
         </nav>
       </div>
 
-      {/* Footer */}
-      <div className="absolute bottom-4 left-4 right-4">
+      {/* Footer - Only visible on large screens */}
+      <div className="absolute bottom-4 left-4 right-4 hidden lg:block">
         <div className="bg-gray-50 rounded-lg p-3">
           <p className="text-xs text-gray-500 text-center">
             3D E-Learning Platform

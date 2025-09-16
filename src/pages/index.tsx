@@ -15,6 +15,7 @@ import InstructorDashboard from "./instructor/Dashboard";
 import InstructorCourses from "./instructor/Courses";
 import CourseBuilder from "./instructor/CourseBuilder";
 import StudentDashboard from "./student/Dashboard";
+import Profile from "./Profile";
 
 const router = createBrowserRouter([
   {
@@ -106,6 +107,15 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute requiredRole="student">
             <StudentDashboard />
+          </ProtectedRoute>
+        )
+      },
+      // Route profile accessible à tous les utilisateurs authentifiés
+      {
+        path: "profile",
+        element: (
+          <ProtectedRoute>
+            <Profile />
           </ProtectedRoute>
         )
       },

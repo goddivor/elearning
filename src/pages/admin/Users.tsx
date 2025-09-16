@@ -18,6 +18,7 @@ import type { ModalRef } from '@/types/modal-ref';
 import { userService, type User, type UpdateUserDto, type CreateUserDto } from '@/services/userService';
 import { useToast } from '@/context/toast-context';
 import { useAuth } from '@/contexts/AuthContext';
+import { avatarService } from '@/services/avatarService';
 
 const AdminUsers = () => {
   useTitle("Gestion des Utilisateurs");
@@ -485,10 +486,20 @@ const AdminUsers = () => {
       sortable: true,
       render: (_, user) => (
         <div className="flex items-center">
-          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-            <span className="text-sm font-medium text-blue-600">
-              {user.firstName[0]}{user.lastName[0]}
-            </span>
+          <div className="w-10 h-10 rounded-full mr-3 overflow-hidden">
+            {user.avatar ? (
+              <img
+                src={avatarService.getAvatarUrl(user.avatar)}
+                alt={`${user.firstName} ${user.lastName}`}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-blue-100 flex items-center justify-center">
+                <span className="text-sm font-medium text-blue-600">
+                  {user.firstName[0]}{user.lastName[0]}
+                </span>
+              </div>
+            )}
           </div>
           <div>
             <div className="text-sm font-medium text-gray-900">
