@@ -4,13 +4,34 @@
   font-family: "SpaceGrotesk";
   src: local("SpaceGrotesk"), url("./assets/fonts/SpaceGrotesk.ttf");
 }
+html {
+  zoom: 90%;
+}
 
-body {
+html, body {
   margin: 0;
   padding: 0;
+  height: 100%;
   color: #212121;
   box-sizing: border-box;
   font-family: "SpaceGrotesk", sans-serif;
+  overflow-x: hidden;
+  position: relative;
+}
+
+#root {
+  min-height: 100vh;
+  height: 100%;
+  position: relative;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Empêcher le pull-to-refresh sur mobile */
+body {
+  overscroll-behavior: none;
 }
 
 button {

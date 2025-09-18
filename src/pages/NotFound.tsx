@@ -8,9 +8,20 @@ import useTitle from '@/hooks/useTitle';
 
 const NotFound: React.FC = () => {
   useTitle("Page introuvable");
-  
+
+  // Empêcher le scroll bounce sur cette page
+  React.useEffect(() => {
+    document.body.style.overscrollBehavior = 'none';
+    document.documentElement.style.overscrollBehavior = 'none';
+
+    return () => {
+      document.body.style.overscrollBehavior = '';
+      document.documentElement.style.overscrollBehavior = '';
+    };
+  }, []);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col items-center justify-center px-4">
+    <div className="fixed inset-0 bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col items-center justify-center px-4 overflow-hidden">
       <div className="text-center max-w-md mx-auto">
         {/* 404 Illustration */}
         <div className="relative mb-8">
