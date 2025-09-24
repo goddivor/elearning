@@ -1,6 +1,6 @@
 // src/components/Toast.tsx
 import React, { useEffect, useState } from "react";
-import { useToast, type Toast as ToastType } from "../../context/toast-context";
+import { useToast, type Toast as ToastType } from "../../contexts/toast-context";
 import { X } from "@phosphor-icons/react";
 import { TickCircle, InfoCircle, Warning2, CloseCircle } from "iconsax-react";
 

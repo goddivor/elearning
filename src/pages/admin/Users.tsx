@@ -16,7 +16,7 @@ import CsvImportModal from '@/components/modals/CsvImportModal';
 import CsvExportModal from '@/components/modals/CsvExportModal';
 import type { ModalRef } from '@/types/modal-ref';
 import { userService, type User, type UpdateUserDto, type CreateUserDto } from '@/services/userService';
-import { useToast } from '@/context/toast-context';
+import { useToast } from '@/contexts/toast-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { avatarService } from '@/services/avatarService';
 

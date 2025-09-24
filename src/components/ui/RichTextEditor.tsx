@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
-import { useToast } from '@/context/toast-context';
+import { useToast } from '@/contexts/toast-context';
 import { mediaService } from '@/services/mediaService';
 import {
   ArrowUUpLeft,

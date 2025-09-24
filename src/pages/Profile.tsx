@@ -6,7 +6,7 @@ import AvatarUpload from '@/components/ui/AvatarUpload';
 import { useAuth } from '@/contexts/AuthContext';
 import { userService } from '@/services/userService';
 import { avatarService } from '@/services/avatarService';
-import { useToast } from '@/context/toast-context';
+import { useToast } from '@/contexts/toast-context';
 
 const Profile = () => {
   useTitle("Mon Profil");

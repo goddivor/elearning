@@ -4,7 +4,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
 import ImageUpload, { type LocalImage, type UploadedImage } from '@/components/ui/ImageUpload';
-import { useToast } from '@/context/toast-context';
+import { useToast } from '@/contexts/toast-context';
 import type { Course } from '@/services/courseService';
 
 interface Props {

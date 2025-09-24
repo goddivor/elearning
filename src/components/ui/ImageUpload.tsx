@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from "react";
 import { Eye, Image, Import, Trash } from "iconsax-react";
 import Button from "./Button";
-import { useToast } from '@/context/toast-context';
+import { useToast } from '@/contexts/toast-context';
 import { mediaService } from "@/services/mediaService";
 
 // Interface pour une image locale (avant upload)

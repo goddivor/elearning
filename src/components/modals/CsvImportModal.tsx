@@ -6,7 +6,7 @@ import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Tooltip from '@/components/ui/Tooltip';
 import { X, Upload, Download, FileText, CheckCircle, XCircle, Eye, Question } from '@phosphor-icons/react';
-import { useToast } from '@/context/toast-context';
+import { useToast } from '@/contexts/toast-context';
 
 interface CsvImportModalProps {
   onImport?: (users: ImportedUser[]) => void;

@@ -23,7 +23,7 @@ import DocumentUpload, {
 import RichTextEditor, {
   type LocalImage,
 } from "@/components/ui/RichTextEditor";
-import { useToast } from '@/context/toast-context';
+import { useToast } from '@/contexts/toast-context';
 import { mediaService } from "@/services/mediaService";
 
 interface Lesson {

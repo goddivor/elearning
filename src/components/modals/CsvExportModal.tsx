@@ -4,7 +4,7 @@ import type { ModalRef } from '@/types/modal-ref';
 import { exportUsersToCSV, type ExportOptions } from '@/utils/csv-export';
 import Button from '@/components/ui/Button';
 import { X, Download, UserCheck } from '@phosphor-icons/react';
-import { useToast } from '@/context/toast-context';
+import { useToast } from '@/contexts/toast-context';
 
 interface CsvExportModalProps {
   users: User[];

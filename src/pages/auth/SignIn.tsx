@@ -7,7 +7,7 @@ import SpinLoader from '@/components/ui/SpinLoader';
 import { cn } from '@/lib/utils';
 import useTitle from '@/hooks/useTitle';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/context/toast-context';
+import { useToast } from '@/contexts/toast-context';
 import type { ApiError } from '@/types/auth';
 
 const SignIn = () => {

@@ -13,7 +13,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
 import { courseService, type Course, type CreateCourseDto } from '@/services/courseService';
-import { useToast } from '@/context/toast-context';
+import { useToast } from '@/contexts/toast-context';
 import CourseBuilderSidebar from '@/components/course-builder/CourseBuilderSidebar';
 import ModuleEditor from '@/components/course-builder/ModuleEditor';
 import LessonEditor from '@/components/course-builder/LessonEditor';

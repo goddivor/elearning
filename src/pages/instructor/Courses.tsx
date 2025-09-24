@@ -15,7 +15,7 @@ import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
 import Input from "@/components/ui/Input";
 import { courseService, type Course } from "@/services/courseService";
-import { useToast } from '@/context/toast-context';
+import { useToast } from '@/contexts/toast-context';
 
 const InstructorCourses = () => {
   useTitle("Mes Cours");

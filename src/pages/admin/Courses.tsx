@@ -18,7 +18,7 @@ import Modal from '@/components/ui/Modal';
 import MetricCard from '@/components/ui/MetricCard';
 import { courseService, type Course, type CourseStats } from '@/services/courseService';
 import { avatarService } from '@/services/avatarService';
-import { useToast } from '@/context/toast-context';
+import { useToast } from '@/contexts/toast-context';
 
 const AdminCourses = () => {
   useTitle("Gestion des Cours");
