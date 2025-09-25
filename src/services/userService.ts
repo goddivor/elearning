@@ -6,6 +6,7 @@ export interface User {
   firstName: string;
   lastName: string;
   role: 'admin' | 'instructor' | 'student';
+  profiles?: string[]; // IDs des profils assignés
   isActive: boolean;
   avatar?: string;
   createdAt: string;
@@ -32,6 +33,7 @@ export interface CreateUserDto {
   firstName: string;
   lastName: string;
   role: 'admin' | 'instructor' | 'student';
+  profiles?: string[]; // IDs des profils assignés
 }
 
 export interface UpdateUserDto {
@@ -39,6 +41,7 @@ export interface UpdateUserDto {
   firstName?: string;
   lastName?: string;
   role?: 'admin' | 'instructor' | 'student';
+  profiles?: string[]; // IDs des profils assignés
   password?: string;
 }
 

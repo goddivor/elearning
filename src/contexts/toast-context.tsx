@@ -25,6 +25,7 @@ interface ToastContextType {
   toasts: Toast[];
   addToast: (toast: Omit<Toast, "id">) => void;
   removeToast: (id: string) => void;
+  showToast: (title: string, type?: ToastType) => void;
   success: (title: string, message?: string, options?: Partial<Toast>) => void;
   error: (title: string, message?: string, options?: Partial<Toast>) => void;
   warning: (title: string, message?: string, options?: Partial<Toast>) => void;
@@ -100,10 +101,18 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
     [addToast]
   );
 
+  const showToast = useCallback(
+    (title: string, type: ToastType = "info") => {
+      addToast({ type, title });
+    },
+    [addToast]
+  );
+
   const value: ToastContextType = {
     toasts,
     addToast,
     removeToast,
+    showToast,
     success,
     error,
     warning,

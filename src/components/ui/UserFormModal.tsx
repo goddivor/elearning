@@ -1,10 +1,12 @@
-import { forwardRef, useImperativeHandle, useState, useEffect } from 'react';
+import { forwardRef, useImperativeHandle, useState, useEffect, useCallback } from 'react';
 import { Profile, Save2, UserAdd, Eye, EyeSlash, Refresh } from 'iconsax-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
 import { X } from "@phosphor-icons/react";
 import type { ModalRef } from '@/types/modal-ref';
+import type { RoleBasedProfile } from '@/types/role-permissions';
+import roleBasedProfileService from '@/services/roleBasedProfileService';
 
 interface UserFormModalProps {
   user?: User | null;
@@ -18,6 +20,7 @@ export interface UserFormData {
   email: string;
   password?: string;
   role: 'admin' | 'instructor' | 'student';
+  profileId?: string; // ID du profil assigné (simplifié pour l'UI)
   resetPassword?: boolean;
 }
 
@@ -27,6 +30,7 @@ interface User {
   lastName: string;
   email: string;
   role: 'admin' | 'instructor' | 'student';
+  profiles?: string[]; // IDs des profils assignés
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -43,10 +47,13 @@ const UserFormModal = forwardRef<ModalRef, UserFormModalProps>(
       email: '',
       password: '',
       role: 'student',
+      profileId: undefined,
       resetPassword: false,
     });
     const [errors, setErrors] = useState<Partial<UserFormData>>({});
     const [showPassword, setShowPassword] = useState(false);
+    const [availableProfiles, setAvailableProfiles] = useState<RoleBasedProfile[]>([]);
+    const [profilesLoading, setProfilesLoading] = useState(false);
 
     const isEditMode = !!user;
 
@@ -105,6 +112,7 @@ const UserFormModal = forwardRef<ModalRef, UserFormModalProps>(
             lastName: user.lastName,
             email: user.email,
             role: user.role,
+            profileId: user.profiles?.[0] || undefined, // Premier profil du tableau
             resetPassword: false,
             password: '',
           });
@@ -116,15 +124,54 @@ const UserFormModal = forwardRef<ModalRef, UserFormModalProps>(
             email: '',
             password: '',
             role: 'student',
+            profileId: undefined,
             resetPassword: false,
           });
         }
+        // Charger les profils disponibles
+        loadAvailableProfiles();
         setErrors({});
         setShowPassword(false);
       }
     }, [isOpen, user]);
 
-    const handleInputChange = (field: keyof UserFormData, value: string | boolean) => {
+    // Charger les profils disponibles
+    const loadAvailableProfiles = async () => {
+      setProfilesLoading(true);
+      try {
+        const profiles = await roleBasedProfileService.getAllProfiles();
+        setAvailableProfiles(profiles.filter(p => p.isActive));
+      } catch (error) {
+        console.error('Error loading profiles:', error);
+        setAvailableProfiles([]);
+      } finally {
+        setProfilesLoading(false);
+      }
+    };
+
+    // Filtrer les profils par rôle de base
+    const getFilteredProfiles = useCallback((): RoleBasedProfile[] => {
+      if (formData.role === 'admin') {
+        return []; // Les admins n'ont pas besoin de profils spécialisés
+      }
+      return availableProfiles.filter(profile =>
+        profile.baseRole === formData.role &&
+        profile.isActive
+      );
+    }, [formData.role, availableProfiles]);
+
+    // Réinitialiser le profil quand le rôle change
+    useEffect(() => {
+      if (formData.profileId) {
+        const filteredProfiles = getFilteredProfiles();
+        const isCurrentProfileValid = filteredProfiles.some(p => p._id === formData.profileId);
+        if (!isCurrentProfileValid) {
+          setFormData(prev => ({ ...prev, profileId: undefined }));
+        }
+      }
+    }, [formData.role, formData.profileId, availableProfiles, getFilteredProfiles]);
+
+    const handleInputChange = (field: keyof UserFormData, value: string | boolean | undefined) => {
       setFormData(prev => ({
         ...prev,
         [field]: value,
@@ -428,6 +475,60 @@ const UserFormModal = forwardRef<ModalRef, UserFormModalProps>(
               </Badge>
             )}
           </div>
+
+          {/* Sélecteur de profils pour les rôles non-admin */}
+          {formData.role !== 'admin' && (
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Profil de permissions
+              </label>
+              {profilesLoading ? (
+                <div className="flex items-center justify-center py-3">
+                  <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                  <span className="ml-2 text-sm text-gray-500">Chargement des profils...</span>
+                </div>
+              ) : (
+                <>
+                  <select
+                    value={formData.profileId || ''}
+                    onChange={(e) => handleInputChange('profileId', e.target.value === '' ? undefined : e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Profil par défaut</option>
+                    {getFilteredProfiles().map((profile) => (
+                      <option key={profile._id} value={profile._id}>
+                        {profile.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  {formData.profileId && (
+                    <div className="mt-2">
+                      {(() => {
+                        const selectedProfile = getFilteredProfiles().find(p => p._id === formData.profileId);
+                        return selectedProfile ? (
+                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                            <p className="text-sm text-gray-700 font-medium">{selectedProfile.name}</p>
+                            <p className="text-xs text-gray-500 mt-1">{selectedProfile.description}</p>
+                            {selectedProfile.isSystemProfile && (
+                              <Badge variant="primary" size="sm" className="mt-2">
+                                Profil système
+                              </Badge>
+                            )}
+                          </div>
+                        ) : null;
+                      })()}
+                    </div>
+                  )}
+
+                  <p className="text-xs text-gray-500 mt-1">
+                    {formData.role === 'instructor' && 'Seuls les profils instructeur sont disponibles'}
+                    {formData.role === 'student' && 'Seuls les profils étudiant sont disponibles'}
+                  </p>
+                </>
+              )}
+            </div>
+          )}
             </div>
           </div>
 

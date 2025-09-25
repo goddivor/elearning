@@ -9,15 +9,19 @@ interface Tag {
 interface TagSelectorProps {
   selectedTags: Tag[];
   onTagsChange: (tags: Tag[]) => void;
+  availableTags?: Tag[];
   placeholder?: string;
   label?: string;
+  error?: string;
 }
 
 export function TagSelector({
   selectedTags,
   onTagsChange,
+  availableTags,
   placeholder = "Ajouter des tags...",
   label,
+  error,
 }: TagSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -114,7 +118,9 @@ export function TagSelector({
         </label>
       )}
       <div
-        className="min-h-[42px] bg-white p-1 border border-gray-300 rounded flex flex-wrap items-center gap-2 cursor-text px-2 focus-within:ring-2 focus-within:ring-[#14A800] focus-within:border-transparent"
+        className={`min-h-[42px] bg-white p-1 border rounded flex flex-wrap items-center gap-2 cursor-text px-2 focus-within:ring-2 focus-within:ring-[#14A800] focus-within:border-transparent ${
+          error ? "border-red-500" : "border-gray-300"
+        }`}
         onClick={() => {
           setIsOpen(true);
           inputRef.current?.focus();
@@ -160,6 +166,28 @@ export function TagSelector({
       {isOpen && (
         <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-y-auto">
           <div className="p-2">
+            {/* Available tags */}
+            {availableTags && availableTags.length > 0 && (
+              <div className="mb-2">
+                <div className="text-xs text-gray-500 mb-1">Actions disponibles</div>
+                {availableTags
+                  .filter(availableTag => !selectedTags.some(selected => selected.id === availableTag.id))
+                  .map((tag) => (
+                    <div
+                      key={tag.id}
+                      className="flex items-center justify-between p-2 hover:bg-gray-100 rounded cursor-pointer"
+                      onClick={() => onTagsChange([...selectedTags, tag])}
+                    >
+                      <span>{tag.label}</span>
+                      <div className="p-[2px] rounded-full bg-green-500">
+                        <Plus color="white" size={8} className="text-white" />
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+
+            {/* Custom tag input */}
             {inputValue && (
               <div
                 className="flex items-center justify-between p-2 hover:bg-gray-100 rounded cursor-pointer"
@@ -171,9 +199,11 @@ export function TagSelector({
                 </div>
               </div>
             )}
+
+            {/* Selected tags */}
             {selectedTags.length > 0 && (
               <div className="mb-2">
-                <div className="text-xs text-gray-500 mb-1">Selected tags</div>
+                <div className="text-xs text-gray-500 mb-1">Actions sélectionnées</div>
                 {selectedTags.map((tag) => (
                   <div
                     key={tag.id}
@@ -190,6 +220,9 @@ export function TagSelector({
             )}
           </div>
         </div>
+      )}
+      {error && (
+        <p className="text-red-500 text-sm mt-1">{error}</p>
       )}
     </div>
   );

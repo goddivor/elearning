@@ -104,6 +104,11 @@ const Sidebar = () => {
             href: '/dashboard/admin/users'
           },
           {
+            title: 'Gestion des Profils',
+            icon: Profile2User,
+            href: '/dashboard/admin/profiles'
+          },
+          {
             title: 'Gestion des Cours',
             icon: Book1,
             href: '/dashboard/admin/courses'

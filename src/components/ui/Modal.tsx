@@ -49,15 +49,15 @@ const Modal: React.FC<ModalProps> = ({
   const getSizeClasses = () => {
     switch (size) {
       case 'sm':
-        return 'max-w-md';
+        return 'max-w-md max-h-[80vh]';
       case 'md':
-        return 'max-w-lg';
+        return 'max-w-xl max-h-[85vh]';
       case 'lg':
-        return 'max-w-2xl';
+        return 'max-w-4xl max-h-[90vh]';
       case 'xl':
-        return 'max-w-4xl';
+        return 'max-w-6xl max-h-[95vh]';
       default:
-        return 'max-w-lg';
+        return 'max-w-xl max-h-[85vh]';
     }
   };
 
@@ -66,12 +66,12 @@ const Modal: React.FC<ModalProps> = ({
   return (
     <div
       ref={modalRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4"
       onClick={handleBackdropClick}
     >
       <div
         className={cn(
-          "bg-white rounded-lg shadow-xl w-full",
+          "bg-white rounded-lg shadow-xl w-full flex flex-col",
           getSizeClasses(),
           className
         )}
@@ -93,7 +93,7 @@ const Modal: React.FC<ModalProps> = ({
         )}
 
         {/* Content */}
-        <div className={cn("p-6", !title && "pt-6")}>
+        <div className={cn("p-6 overflow-y-auto flex-1", !title && "pt-6")}>
           {children}
         </div>
       </div>

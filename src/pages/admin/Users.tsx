@@ -164,6 +164,7 @@ const AdminUsers = () => {
           lastName: userData.lastName,
           email: userData.email,
           role: userData.role,
+          profiles: userData.profileId ? [userData.profileId] : [],
         };
 
         // Include password if resetPassword is true
@@ -187,6 +188,7 @@ const AdminUsers = () => {
           email: userData.email,
           password: userData.password,
           role: userData.role,
+          profiles: userData.profileId ? [userData.profileId] : [],
         };
         await userService.createUser(createData);
         toast.success(

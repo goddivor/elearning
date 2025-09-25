@@ -12,6 +12,7 @@ interface CustomSelectProps {
   onChange: (value: string | null) => void;
   placeholder?: string;
   label?: string;
+  error?: string;
 }
 
 export function CustomSelect({
@@ -20,6 +21,7 @@ export function CustomSelect({
   onChange,
   placeholder = "Sélectionner...",
   label,
+  error,
 }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -61,7 +63,9 @@ export function CustomSelect({
         </label>
       )}
       <div
-        className={`bg-white h-[42px] px-3 border border-gray-300 rounded flex items-center justify-between cursor-pointer ${
+        className={`bg-white h-[42px] px-3 border rounded flex items-center justify-between cursor-pointer ${
+          error ? "border-red-500" : "border-gray-300"
+        } ${
           isOpen || isFocused ? "ring-2 ring-[#14A800] border-transparent" : ""
         }`}
         onClick={() => {
@@ -94,10 +98,10 @@ export function CustomSelect({
               }}
               className="hover:bg-gray-100 rounded-full p-1"
             >
-              <X size={16} className="text-gray-400" />
+              <X size={16} color="#9CA3AF" />
             </button>
           )}
-          <CaretDown size={20} className="text-gray-400" />
+          <CaretDown size={20} color="#9CA3AF" />
         </div>
       </div>
 
@@ -120,6 +124,9 @@ export function CustomSelect({
             </div>
           ))}
         </div>
+      )}
+      {error && (
+        <p className="text-red-500 text-sm mt-1">{error}</p>
       )}
     </div>
   );
