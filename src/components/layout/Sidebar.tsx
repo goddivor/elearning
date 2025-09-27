@@ -1,16 +1,17 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  Category, 
-  Book1, 
-  People, 
-  Chart, 
-  Setting2, 
-  User, 
+import {
+  Category,
+  Book1,
+  People,
+  Chart,
+  Setting2,
+  User,
   BookSaved,
   Medal,
   Video,
-  Profile2User} from 'iconsax-react';
+  Profile2User,
+  Buildings} from 'iconsax-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -114,6 +115,11 @@ const Sidebar = () => {
             href: '/dashboard/admin/courses'
           },
           {
+            title: 'Organisations',
+            icon: Buildings,
+            href: '/dashboard/admin/organizations'
+          },
+          {
             title: 'Statistiques',
             icon: Chart,
             href: '/dashboard/admin/stats'
@@ -201,18 +207,6 @@ const Sidebar = () => {
   return (
     <aside className="fixed left-0 top-16 h-[calc(100vh-4rem)] bg-white border-r border-gray-200 overflow-y-auto transition-all duration-300 lg:w-64 w-16">
       <div className="lg:p-4 p-2">
-        {/* Section Header - Only visible on large screens */}
-        <div className="mb-6 hidden lg:block">
-          <h2 className="text-lg font-semibold text-gray-900">
-            {userRole === 'admin' ? 'Administration' :
-             userRole === 'instructor' ? 'Instructeur' : 'Étudiant'}
-          </h2>
-          <p className="text-sm text-gray-500">
-            {userRole === 'admin' ? 'Gestion de la plateforme' :
-             userRole === 'instructor' ? 'Gestion des cours' : 'Mon apprentissage'}
-          </p>
-        </div>
-
         {/* Navigation Menu */}
         <nav className="lg:space-y-1 space-y-2">
           {menuItems.map((item) => (
@@ -221,17 +215,6 @@ const Sidebar = () => {
         </nav>
       </div>
 
-      {/* Footer - Only visible on large screens */}
-      <div className="absolute bottom-4 left-4 right-4 hidden lg:block">
-        <div className="bg-gray-50 rounded-lg p-3">
-          <p className="text-xs text-gray-500 text-center">
-            3D E-Learning Platform
-          </p>
-          <p className="text-xs text-gray-400 text-center mt-1">
-            Version 1.0.0
-          </p>
-        </div>
-      </div>
     </aside>
   );
 };
