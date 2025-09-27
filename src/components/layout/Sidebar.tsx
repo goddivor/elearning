@@ -165,12 +165,12 @@ const Sidebar = () => {
           {
             title: 'Dashboard',
             icon: Category,
-            href: '/student/dashboard'
+            href: '/dashboard/student'
           },
           {
             title: 'Mes Cours',
             icon: BookSaved,
-            href: '/student/courses'
+            href: '/dashboard/student/courses'
           },
           {
             title: 'Parcourir',
@@ -180,7 +180,7 @@ const Sidebar = () => {
           {
             title: 'Progression',
             icon: Chart,
-            href: '/student/progress'
+            href: '/dashboard/student/progress'
           },
           {
             title: 'Certificats',
