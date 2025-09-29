@@ -11,7 +11,7 @@ interface User {
   firstName: string;
   lastName: string;
   email: string;
-  role: 'admin' | 'instructor' | 'student';
+  role: 'admin' | 'instructor' | 'student' | 'organization';
   isActive: boolean;
   avatar?: string;
   createdAt: string;

@@ -2,6 +2,7 @@ import {
   Profile,
   People,
   UserTag,
+  Buildings2,
   Add,
   Import,
   Export,
@@ -9,7 +10,7 @@ import {
 } from "iconsax-react";
 import Button from "@/components/ui/Button";
 
-type UserRole = "admin" | "instructor" | "student";
+type UserRole = "admin" | "instructor" | "student" | "organization";
 
 interface RoleTabsProps {
   activeRole: UserRole | "all";
@@ -19,6 +20,7 @@ interface RoleTabsProps {
     admin: number;
     instructor: number;
     student: number;
+    organization: number;
   };
   onCreateUser: () => void;
   onImportUsers: () => void;
@@ -51,6 +53,12 @@ const roleConfig = {
     icon: People,
     color: "#1D4ED8",
     bgColor: "#EFF6FF",
+  },
+  organization: {
+    label: "Organisations",
+    icon: Buildings2,
+    color: "#D97706",
+    bgColor: "#FEF3C7",
   },
 };
 

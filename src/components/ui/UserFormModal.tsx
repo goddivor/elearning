@@ -19,7 +19,7 @@ export interface UserFormData {
   lastName: string;
   email: string;
   password?: string;
-  role: 'admin' | 'instructor' | 'student';
+  role: 'admin' | 'instructor' | 'student' | 'organization';
   profileId?: string; // ID du profil assigné (simplifié pour l'UI)
   resetPassword?: boolean;
 }
@@ -29,7 +29,7 @@ interface User {
   firstName: string;
   lastName: string;
   email: string;
-  role: 'admin' | 'instructor' | 'student';
+  role: 'admin' | 'instructor' | 'student' | 'organization';
   profiles?: string[]; // IDs des profils assignés
   isActive: boolean;
   createdAt: string;

@@ -5,7 +5,8 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'admin' | 'instructor' | 'student';
+  role: 'admin' | 'instructor' | 'student' | 'organization';
+  roles?: ('admin' | 'instructor' | 'student' | 'organization')[]; // Rôles multiples
   profiles?: string[]; // IDs des profils assignés
   isActive: boolean;
   avatar?: string;
@@ -24,7 +25,7 @@ export interface UserStats {
 }
 
 export interface UpdateUserRoleDto {
-  role: 'admin' | 'instructor' | 'student';
+  role: 'admin' | 'instructor' | 'student' | 'organization';
 }
 
 export interface CreateUserDto {
@@ -32,7 +33,7 @@ export interface CreateUserDto {
   password: string;
   firstName: string;
   lastName: string;
-  role: 'admin' | 'instructor' | 'student';
+  role: 'admin' | 'instructor' | 'student' | 'organization';
   profiles?: string[]; // IDs des profils assignés
 }
 
@@ -40,7 +41,7 @@ export interface UpdateUserDto {
   email?: string;
   firstName?: string;
   lastName?: string;
-  role?: 'admin' | 'instructor' | 'student';
+  role?: 'admin' | 'instructor' | 'student' | 'organization';
   profiles?: string[]; // IDs des profils assignés
   password?: string;
 }
@@ -140,7 +141,7 @@ class UserService {
   }
 
   // Filtrer les utilisateurs par rôle
-  async getUsersByRole(role: 'admin' | 'instructor' | 'student'): Promise<User[]> {
+  async getUsersByRole(role: 'admin' | 'instructor' | 'student' | 'organization'): Promise<User[]> {
     const users = await this.getAllUsers();
     return users.filter(user => user.role === role);
   }
@@ -150,7 +151,7 @@ class UserService {
     firstName: string;
     lastName: string;
     email: string;
-    role: 'admin' | 'instructor' | 'student';
+    role: 'admin' | 'instructor' | 'student' | 'organization';
   }>): Promise<{
     message: string;
     summary: {
@@ -165,6 +166,18 @@ class UserService {
     };
   }> {
     const response = await api.post('/users/bulk-import', { users });
+    return response.data;
+  }
+
+  // Assigner le rôle organisation à un utilisateur
+  async assignOrganizationRole(id: string): Promise<User> {
+    const response = await api.patch(`/users/${id}/assign-organization-role`);
+    return response.data;
+  }
+
+  // Retirer le rôle organisation d'un utilisateur
+  async removeOrganizationRole(id: string): Promise<User> {
+    const response = await api.patch(`/users/${id}/remove-organization-role`);
     return response.data;
   }
 }

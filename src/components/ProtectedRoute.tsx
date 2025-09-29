@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requireAuth?: boolean;
-  requiredRole?: 'admin' | 'instructor' | 'student';
+  requiredRole?: 'admin' | 'instructor' | 'student' | 'organization';
 }
 
 const ProtectedRoute = ({
@@ -37,6 +37,8 @@ const ProtectedRoute = ({
         return <Navigate to="/dashboard/admin" replace />;
       case 'instructor':
         return <Navigate to="/dashboard/instructor" replace />;
+      case 'organization':
+        return <Navigate to="/dashboard/instructor" replace />; // Les organisations utilisent le dashboard instructor
       case 'student':
       default:
         return <Navigate to="/dashboard/student" replace />;

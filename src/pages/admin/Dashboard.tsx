@@ -83,15 +83,17 @@ const AdminDashboard = () => {
       key: 'role',
       title: 'Rôle',
       render: (role) => (
-        <Badge 
+        <Badge
           variant={
             role === 'admin' ? 'danger' :
-            role === 'instructor' ? 'primary' : 'success'
+            role === 'instructor' ? 'primary' :
+            role === 'organization' ? 'warning' : 'success'
           }
           size="sm"
         >
           {role === 'admin' ? 'Administrateur' :
-           role === 'instructor' ? 'Instructeur' : 'Étudiant'}
+           role === 'instructor' ? 'Instructeur' :
+           role === 'organization' ? 'Organisation' : 'Étudiant'}
         </Badge>
       )
     },

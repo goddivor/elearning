@@ -44,7 +44,7 @@ const ForgotPassword = () => {
     
     try {
       // TODO: Implement API call for password reset
-      console.log('Forgot password for:', email);
+      // console.log('Forgot password for:', email);
       
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -62,7 +62,7 @@ const ForgotPassword = () => {
     setLoading(true);
     try {
       // TODO: Implement resend email API call
-      console.log('Resending email to:', email);
+      // console.log('Resending email to:', email);
       
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));

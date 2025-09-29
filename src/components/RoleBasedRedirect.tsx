@@ -18,6 +18,8 @@ const RoleBasedRedirect = () => {
       return <Navigate to="/dashboard/admin" replace />;
     case 'instructor':
       return <Navigate to="/dashboard/instructor" replace />;
+    case 'organization':
+      return <Navigate to="/dashboard/instructor" replace />; // Les organisations utilisent le dashboard instructor
     case 'student':
     default:
       return <Navigate to="/dashboard/student" replace />;

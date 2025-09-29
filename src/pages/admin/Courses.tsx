@@ -1,24 +1,15 @@
-import { useState, useEffect, useCallback } from 'react';
-import {
-  Book,
-  Eye,
-  Edit,
-  Trash,
-  Grid2,
-  Category,
-  People,
-  Star1
-} from 'iconsax-react';
-import useTitle from '@/hooks/useTitle';
-import DataTable, { type Column } from '@/components/ui/DataTable';
-import Button from '@/components/ui/Button';
-import Badge from '@/components/ui/Badge';
-import Input from '@/components/ui/Input';
-import Modal from '@/components/ui/Modal';
-import MetricCard from '@/components/ui/MetricCard';
-import { courseService, type Course, type CourseStats } from '@/services/courseService';
-import { avatarService } from '@/services/avatarService';
-import { useToast } from '@/contexts/toast-context';
+import { useState, useEffect, useCallback } from "react";
+import { Book, Eye, Edit, Trash, Grid2, Category, People, Star1 } from "iconsax-react";
+import useTitle from "@/hooks/useTitle";
+import DataTable, { type Column } from "@/components/ui/DataTable";
+import Button from "@/components/ui/Button";
+import Badge from "@/components/ui/Badge";
+import Input from "@/components/ui/Input";
+import Modal from "@/components/ui/Modal";
+import MetricCard from "@/components/ui/MetricCard";
+import { courseService, type Course, type CourseStats } from "@/services/courseService";
+import { avatarService } from "@/services/avatarService";
+import { useToast } from "@/contexts/toast-context";
 
 const AdminCourses = () => {
   useTitle("Gestion des Cours");
@@ -48,8 +39,8 @@ const AdminCourses = () => {
       setCourses(coursesData);
       setStats(statsData);
     } catch (error) {
-      showError('Erreur de chargement', 'Erreur lors du chargement des cours');
-      console.error('Erreur lors du chargement des données:', error);
+      showError("Erreur de chargement", "Erreur lors du chargement des cours");
+      console.error("Erreur lors du chargement des données:", error);
     } finally {
       setLoading(false);
     }
@@ -62,32 +53,38 @@ const AdminCourses = () => {
   const handleTogglePublish = async (courseId: string) => {
     try {
       await courseService.togglePublishCourse(courseId);
-      success('Statut modifié', 'Statut du cours modifié avec succès');
+      success("Statut modifié", "Statut du cours modifié avec succès");
       loadData();
     } catch (error) {
-      showError('Erreur de statut', 'Erreur lors de la modification du statut');
-      console.error('Erreur lors de la publication/dépublication:', error);
+      showError("Erreur de statut", "Erreur lors de la modification du statut");
+      console.error("Erreur lors de la publication/dépublication:", error);
     }
   };
 
   const handleDeleteCourse = async (courseId: string) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce cours ?')) {
+    if (window.confirm("Êtes-vous sûr de vouloir supprimer ce cours ?")) {
       try {
         await courseService.deleteCourse(courseId);
-        success('Cours supprimé', 'Cours supprimé avec succès');
+        success("Cours supprimé", "Cours supprimé avec succès");
         loadData();
       } catch (error) {
-        showError('Erreur de suppression', 'Erreur lors de la suppression du cours');
-        console.error('Erreur lors de la suppression:', error);
+        showError(
+          "Erreur de suppression",
+          "Erreur lors de la suppression du cours"
+        );
+        console.error("Erreur lors de la suppression:", error);
       }
     }
   };
 
   // Filter courses based on search and filters
   const filteredCourses = courses.filter((course) => {
-    const instructorName = course.instructor && course.instructor.firstName && course.instructor.lastName
-      ? `${course.instructor.firstName} ${course.instructor.lastName}`
-      : 'Instructeur inconnu';
+    const instructorName =
+      course.instructor &&
+      course.instructor.firstName &&
+      course.instructor.lastName
+        ? `${course.instructor.firstName} ${course.instructor.lastName}`
+        : "Instructeur inconnu";
 
     const matchesSearch =
       course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -105,25 +102,35 @@ const AdminCourses = () => {
     const matchesInstructor =
       instructorFilter === "all" || instructorName === instructorFilter;
 
-    return matchesSearch && matchesStatus && matchesCategory && matchesInstructor;
+    return (
+      matchesSearch && matchesStatus && matchesCategory && matchesInstructor
+    );
   });
 
-  const categories = [...new Set(courses.map(c => c.category))];
-  const instructors = [...new Set(courses
-    .filter(c => c.instructor && c.instructor.firstName && c.instructor.lastName)
-    .map(c => `${c.instructor!.firstName} ${c.instructor!.lastName}`)
-  )];
+  const categories = [...new Set(courses.map((c) => c.category))];
+  const instructors = [
+    ...new Set(
+      courses
+        .filter(
+          (c) => c.instructor && c.instructor.firstName && c.instructor.lastName
+        )
+        .map((c) => `${c.instructor!.firstName} ${c.instructor!.lastName}`)
+    ),
+  ];
 
   const courseColumns: Column<Course>[] = [
     {
-      key: 'select',
+      key: "select",
       title: (
         <input
           type="checkbox"
-          checked={selectedCourses.length > 0 && selectedCourses.length === filteredCourses.length}
+          checked={
+            selectedCourses.length > 0 &&
+            selectedCourses.length === filteredCourses.length
+          }
           onChange={(e) => {
             if (e.target.checked) {
-              setSelectedCourses(filteredCourses.map(c => c.id));
+              setSelectedCourses(filteredCourses.map((c) => c.id));
             } else {
               setSelectedCourses([]);
             }
@@ -131,7 +138,7 @@ const AdminCourses = () => {
           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
         />
       ),
-      width: '50px',
+      width: "50px",
       render: (_, course) => (
         <input
           type="checkbox"
@@ -140,16 +147,18 @@ const AdminCourses = () => {
             if (e.target.checked) {
               setSelectedCourses([...selectedCourses, course.id]);
             } else {
-              setSelectedCourses(selectedCourses.filter(id => id !== course.id));
+              setSelectedCourses(
+                selectedCourses.filter((id) => id !== course.id)
+              );
             }
           }}
           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
         />
-      )
+      ),
     },
     {
-      key: 'title',
-      title: 'Cours',
+      key: "title",
+      title: "Cours",
       sortable: true,
       render: (_, course) => (
         <div className="flex items-center">
@@ -173,21 +182,27 @@ const AdminCourses = () => {
             </div>
           </div>
         </div>
-      )
+      ),
     },
     {
-      key: 'instructor',
-      title: 'Instructeur',
+      key: "instructor",
+      title: "Instructeur",
       sortable: true,
       render: (_, course) => {
-        if (!course.instructor || !course.instructor.firstName || !course.instructor.lastName) {
+        if (
+          !course.instructor ||
+          !course.instructor.firstName ||
+          !course.instructor.lastName
+        ) {
           return (
             <div className="flex items-center">
               <div className="w-8 h-8 rounded-full mr-3 overflow-hidden bg-gray-100 flex items-center justify-center">
                 <span className="text-xs font-medium text-gray-600">?</span>
               </div>
               <div>
-                <div className="text-sm font-medium text-gray-900">Instructeur inconnu</div>
+                <div className="text-sm font-medium text-gray-900">
+                  Instructeur inconnu
+                </div>
                 <div className="text-xs text-gray-500">-</div>
               </div>
             </div>
@@ -206,7 +221,8 @@ const AdminCourses = () => {
               ) : (
                 <div className="w-full h-full bg-gray-100 flex items-center justify-center">
                   <span className="text-xs font-medium text-gray-600">
-                    {course.instructor.firstName[0]}{course.instructor.lastName[0]}
+                    {course.instructor.firstName[0]}
+                    {course.instructor.lastName[0]}
                   </span>
                 </div>
               )}
@@ -215,22 +231,24 @@ const AdminCourses = () => {
               <div className="text-sm font-medium text-gray-900">
                 {course.instructor.firstName} {course.instructor.lastName}
               </div>
-              <div className="text-xs text-gray-500">{course.instructor.email || '-'}</div>
+              <div className="text-xs text-gray-500">
+                {course.instructor.email || "-"}
+              </div>
             </div>
           </div>
         );
-      }
+      },
     },
     {
-      key: 'category',
-      title: 'Catégorie',
+      key: "category",
+      title: "Catégorie",
       render: (category) => (
         <span className="text-sm text-gray-600 capitalize">{category}</span>
       ),
     },
     {
-      key: 'level',
-      title: 'Niveau',
+      key: "level",
+      title: "Niveau",
       sortable: true,
       render: (level) => (
         <Badge
@@ -249,18 +267,18 @@ const AdminCourses = () => {
             ? "Intermédiaire"
             : "Avancé"}
         </Badge>
-      )
+      ),
     },
     {
-      key: 'enrolledStudents',
-      title: 'Étudiants',
+      key: "enrolledStudents",
+      title: "Étudiants",
       render: (count) => (
         <span className="text-sm font-medium text-gray-900">{count || 0}</span>
       ),
     },
     {
-      key: 'price',
-      title: 'Prix',
+      key: "price",
+      title: "Prix",
       render: (price) => (
         <span className="text-sm font-medium text-gray-900">
           {price === 0 ? "Gratuit" : `${price}€`}
@@ -268,8 +286,8 @@ const AdminCourses = () => {
       ),
     },
     {
-      key: 'averageRating',
-      title: 'Note',
+      key: "averageRating",
+      title: "Note",
       render: (rating) => (
         <div className="flex items-center">
           <span className="text-sm font-medium text-gray-900">
@@ -280,8 +298,8 @@ const AdminCourses = () => {
       ),
     },
     {
-      key: 'isPublished',
-      title: 'Statut',
+      key: "isPublished",
+      title: "Statut",
       render: (isPublished, course) => (
         <button
           onClick={() => handleTogglePublish(course.id)}
@@ -294,9 +312,9 @@ const AdminCourses = () => {
       ),
     },
     {
-      key: 'actions',
-      title: 'Actions',
-      width: '200px',
+      key: "actions",
+      title: "Actions",
+      width: "200px",
       render: (_, course) => (
         <div className="flex items-center space-x-2">
           <Button
@@ -313,7 +331,12 @@ const AdminCourses = () => {
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => window.open(`/dashboard/instructor/course-builder/${course.id}`, "_blank")}
+            onClick={() =>
+              window.open(
+                `/dashboard/instructor/course-builder/${course.id}`,
+                "_blank"
+              )
+            }
             title="Modifier"
           >
             <Edit size={16} color="#3B82F6" />
@@ -328,8 +351,8 @@ const AdminCourses = () => {
             <Trash size={16} color="#EF4444" />
           </Button>
         </div>
-      )
-    }
+      ),
+    },
   ];
 
   return (
@@ -455,8 +478,10 @@ const AdminCourses = () => {
               className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">Toutes les catégories</option>
-              {categories.map(category => (
-                <option key={category} value={category}>{category}</option>
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
               ))}
             </select>
 
@@ -466,8 +491,10 @@ const AdminCourses = () => {
               className="px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">Tous les instructeurs</option>
-              {instructors.map(instructor => (
-                <option key={instructor} value={instructor}>{instructor}</option>
+              {instructors.map((instructor) => (
+                <option key={instructor} value={instructor}>
+                  {instructor}
+                </option>
               ))}
             </select>
           </div>
@@ -480,7 +507,8 @@ const AdminCourses = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <span className="text-sm font-medium text-blue-900">
-                {selectedCourses.length} cours sélectionné{selectedCourses.length > 1 ? 's' : ''}
+                {selectedCourses.length} cours sélectionné
+                {selectedCourses.length > 1 ? "s" : ""}
               </span>
               <Button
                 onClick={() => setSelectedCourses([])}
@@ -584,24 +612,30 @@ const AdminCourses = () => {
                   <div className="w-6 h-6 rounded-full mr-2 overflow-hidden">
                     {course.instructor && course.instructor.avatar ? (
                       <img
-                        src={avatarService.getAvatarUrl(course.instructor.avatar)}
+                        src={avatarService.getAvatarUrl(
+                          course.instructor.avatar
+                        )}
                         alt={`${course.instructor.firstName} ${course.instructor.lastName}`}
                         className="w-full h-full object-cover"
                       />
                     ) : (
                       <div className="w-full h-full bg-gray-100 flex items-center justify-center">
                         <span className="text-xs font-medium text-gray-600">
-                          {course.instructor && course.instructor.firstName && course.instructor.lastName
+                          {course.instructor &&
+                          course.instructor.firstName &&
+                          course.instructor.lastName
                             ? `${course.instructor.firstName[0]}${course.instructor.lastName[0]}`
-                            : '?'}
+                            : "?"}
                         </span>
                       </div>
                     )}
                   </div>
                   <span className="text-sm text-gray-600">
-                    {course.instructor && course.instructor.firstName && course.instructor.lastName
+                    {course.instructor &&
+                    course.instructor.firstName &&
+                    course.instructor.lastName
                       ? `${course.instructor.firstName} ${course.instructor.lastName}`
-                      : 'Instructeur inconnu'}
+                      : "Instructeur inconnu"}
                   </span>
                 </div>
 
@@ -629,7 +663,12 @@ const AdminCourses = () => {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => window.open(`/dashboard/instructor/course-builder/${course.id}`, "_blank")}
+                    onClick={() =>
+                      window.open(
+                        `/dashboard/instructor/course-builder/${course.id}`,
+                        "_blank"
+                      )
+                    }
                     title="Modifier"
                   >
                     <Edit size={14} color="#3B82F6" />
@@ -650,41 +689,6 @@ const AdminCourses = () => {
         </div>
       )}
 
-      {/* Stats Summary */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Résumé</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-          <div>
-            <div className="text-2xl font-bold text-blue-600">
-              {filteredCourses.length}
-            </div>
-            <div className="text-sm text-gray-500">Total cours</div>
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-green-600">
-              {filteredCourses.filter((c) => c.isPublished).length}
-            </div>
-            <div className="text-sm text-gray-500">Publiés</div>
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-purple-600">
-              {filteredCourses.reduce((sum, c) => sum + (c.enrolledStudents || 0), 0)}
-            </div>
-            <div className="text-sm text-gray-500">Étudiants</div>
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-yellow-600">
-              {filteredCourses.length > 0
-                ? (
-                    filteredCourses.reduce((sum, c) => sum + c.averageRating, 0) /
-                    filteredCourses.length
-                  ).toFixed(1)
-                : "0.0"}
-            </div>
-            <div className="text-sm text-gray-500">Note moyenne</div>
-          </div>
-        </div>
-      </div>
 
       {/* Course Details Modal */}
       <Modal
@@ -697,35 +701,67 @@ const AdminCourses = () => {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <h4 className="font-medium text-gray-900">Informations générales</h4>
+                <h4 className="font-medium text-gray-900">
+                  Informations générales
+                </h4>
                 <div className="mt-2 space-y-2 text-sm">
-                  <div><strong>Catégorie:</strong> {viewingCourse.category}</div>
-                  <div><strong>Niveau:</strong> {viewingCourse.level}</div>
-                  <div><strong>Prix:</strong> {viewingCourse.price === 0 ? 'Gratuit' : `${viewingCourse.price}€`}</div>
-                  <div><strong>Durée:</strong> {Math.floor(viewingCourse.duration / 60)}h {viewingCourse.duration % 60}min</div>
-                  <div><strong>Leçons:</strong> {viewingCourse.totalLessons}</div>
+                  <div>
+                    <strong>Catégorie:</strong> {viewingCourse.category}
+                  </div>
+                  <div>
+                    <strong>Niveau:</strong> {viewingCourse.level}
+                  </div>
+                  <div>
+                    <strong>Prix:</strong>{" "}
+                    {viewingCourse.price === 0
+                      ? "Gratuit"
+                      : `${viewingCourse.price}€`}
+                  </div>
+                  <div>
+                    <strong>Durée:</strong>{" "}
+                    {Math.floor(viewingCourse.duration / 60)}h{" "}
+                    {viewingCourse.duration % 60}min
+                  </div>
+                  <div>
+                    <strong>Leçons:</strong> {viewingCourse.totalLessons}
+                  </div>
                 </div>
               </div>
               <div>
                 <h4 className="font-medium text-gray-900">Statistiques</h4>
                 <div className="mt-2 space-y-2 text-sm">
-                  <div><strong>Inscrits:</strong> {viewingCourse.enrolledStudents}</div>
-                  <div><strong>Note moyenne:</strong> {viewingCourse.averageRating.toFixed(1)}/5</div>
-                  <div><strong>Avis:</strong> {viewingCourse.totalReviews}</div>
-                  <div><strong>Statut:</strong> {viewingCourse.isPublished ? 'Publié' : 'Brouillon'}</div>
+                  <div>
+                    <strong>Inscrits:</strong> {viewingCourse.enrolledStudents}
+                  </div>
+                  <div>
+                    <strong>Note moyenne:</strong>{" "}
+                    {viewingCourse.averageRating.toFixed(1)}/5
+                  </div>
+                  <div>
+                    <strong>Avis:</strong> {viewingCourse.totalReviews}
+                  </div>
+                  <div>
+                    <strong>Statut:</strong>{" "}
+                    {viewingCourse.isPublished ? "Publié" : "Brouillon"}
+                  </div>
                 </div>
               </div>
             </div>
             <div>
               <h4 className="font-medium text-gray-900">Description</h4>
-              <p className="mt-2 text-sm text-gray-600">{viewingCourse.description}</p>
+              <p className="mt-2 text-sm text-gray-600">
+                {viewingCourse.description}
+              </p>
             </div>
             {viewingCourse.tags.length > 0 && (
               <div>
                 <h4 className="font-medium text-gray-900">Tags</h4>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {viewingCourse.tags.map(tag => (
-                    <span key={tag} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                  {viewingCourse.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                    >
                       {tag}
                     </span>
                   ))}

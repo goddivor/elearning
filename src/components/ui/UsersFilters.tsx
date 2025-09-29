@@ -42,6 +42,7 @@ export default function UsersFilters({
     { label: "Administrateur", value: "admin" },
     { label: "Instructeur", value: "instructor" },
     { label: "Étudiant", value: "student" },
+    { label: "Organisation", value: "organization" },
   ];
 
   const statusOptions = [
@@ -188,6 +189,14 @@ export default function UsersFilters({
             className="px-3 py-1 text-sm bg-purple-100 text-purple-700 hover:bg-purple-200 rounded-full"
           >
             Étudiants seulement
+          </Button>
+          <Button
+            onClick={() => handleFilterChange("role", "organization")}
+            variant="ghost"
+            size="sm"
+            className="px-3 py-1 text-sm bg-orange-100 text-orange-700 hover:bg-orange-200 rounded-full"
+          >
+            Organisations seulement
           </Button>
           <Button
             onClick={() => {

@@ -3,7 +3,7 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'student' | 'instructor' | 'admin';
+  role: 'student' | 'instructor' | 'admin' | 'organization';
   isActive: boolean;
   avatar?: string;
   createdAt: string;
@@ -21,6 +21,22 @@ export interface RegisterRequest {
   firstName: string;
   lastName: string;
   role: 'student' | 'instructor';
+}
+
+export interface RegisterOrganizationRequest {
+  // Données utilisateur
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  // Données organisation
+  organizationName: string;
+  organizationDescription: string;
+  organizationType: 'school' | 'university' | 'training-center' | 'corporate';
+  organizationAddress: string;
+  organizationContactEmail: string;
+  organizationContactPhone: string;
+  organizationWebsite?: string;
 }
 
 export interface AuthResponse {

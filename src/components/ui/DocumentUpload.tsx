@@ -46,34 +46,34 @@ const DocumentUpload = ({
   };
 
   const handleFiles = useCallback((files: FileList) => {
-    console.log('📄 DocumentUpload - handleFiles appelé avec:', files.length, 'fichier(s)');
-    console.log('📄 DocumentUpload - disabled:', disabled);
+    // console.log('📄 DocumentUpload - handleFiles appelé avec:', files.length, 'fichier(s)');
+    // console.log('📄 DocumentUpload - disabled:', disabled);
     
     if (files.length === 0 || disabled) {
-      console.log('📄 DocumentUpload - Arrêt: pas de fichiers ou composant désactivé');
+      // console.log('📄 DocumentUpload - Arrêt: pas de fichiers ou composant désactivé');
       return;
     }
 
     const file = files[0];
-    console.log('📄 DocumentUpload - Fichier sélectionné:', {
-      name: file.name,
-      type: file.type,
-      size: file.size
-    });
+    // console.log('📄 DocumentUpload - Fichier sélectionné:', {
+    //   name: file.name,
+    //   type: file.type,
+    //   size: file.size
+    // });
 
     // Validate file
     const validation = mediaService.validateFile(file, mediaService.getValidationOptions('document'));
-    console.log('📄 DocumentUpload - Validation:', validation);
+    // console.log('📄 DocumentUpload - Validation:', validation);
     
     if (!validation.valid) {
-      console.log('📄 DocumentUpload - Fichier invalide:', validation.error);
+      // console.log('📄 DocumentUpload - Fichier invalide:', validation.error);
       showError('Fichier invalide', validation.error || 'Fichier invalide');
       return;
     }
 
     // Créer un objet URL pour la preview locale
     const preview = URL.createObjectURL(file);
-    console.log('📄 DocumentUpload - Preview URL créée:', preview);
+    // console.log('📄 DocumentUpload - Preview URL créée:', preview);
     
     const localFile: LocalFile = {
       file,
@@ -83,7 +83,7 @@ const DocumentUpload = ({
       preview
     };
 
-    console.log('📄 DocumentUpload - Appel de onFileSelect avec:', localFile);
+    // console.log('📄 DocumentUpload - Appel de onFileSelect avec:', localFile);
     onFileSelect(localFile);
     success('Document sélectionné', 'Le document sera uploadé à la sauvegarde');
   }, [onFileSelect, disabled, success, showError]);
@@ -108,29 +108,29 @@ const DocumentUpload = ({
   }, []);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
-    console.log('📄 DocumentUpload - handleDrop appelé');
+    // console.log('📄 DocumentUpload - handleDrop appelé');
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
 
     if (disabled || !e.dataTransfer.files) {
-      console.log('📄 DocumentUpload - Drop ignoré: disabled =', disabled, ', files =', e.dataTransfer.files);
+      // console.log('📄 DocumentUpload - Drop ignoré: disabled =', disabled, ', files =', e.dataTransfer.files);
       return;
     }
 
-    console.log('📄 DocumentUpload - Fichiers droppés:', e.dataTransfer.files.length);
+    // console.log('📄 DocumentUpload - Fichiers droppés:', e.dataTransfer.files.length);
     handleFiles(e.dataTransfer.files);
   }, [handleFiles, disabled]);
 
   const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('📄 DocumentUpload - handleFileInput appelé');
-    console.log('📄 DocumentUpload - Input files:', e.target.files?.length || 0);
+    // console.log('📄 DocumentUpload - handleFileInput appelé');
+    // console.log('📄 DocumentUpload - Input files:', e.target.files?.length || 0);
     
     if (e.target.files && e.target.files.length > 0) {
-      console.log('📄 DocumentUpload - Appel de handleFiles depuis input');
+      // console.log('📄 DocumentUpload - Appel de handleFiles depuis input');
       handleFiles(e.target.files);
     } else {
-      console.log('📄 DocumentUpload - Pas de fichiers dans input');
+      // console.log('📄 DocumentUpload - Pas de fichiers dans input');
     }
   }, [handleFiles]);
 

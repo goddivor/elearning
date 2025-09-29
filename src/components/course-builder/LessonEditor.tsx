@@ -175,11 +175,11 @@ const LessonEditor = ({ lesson, onUpdateLesson }: Props) => {
   };
 
   const handleContentChange = (field: string, value: unknown) => {
-    console.log("🚨🚨🚨 NOUVEAU CODE - handleContentChange appelé:", {
-      field,
-      value,
-    });
-    console.log("📄 LessonEditor - Lesson actuel:", editedLesson);
+    // console.log("🚨🚨🚨 NOUVEAU CODE - handleContentChange appelé:", {
+    //   field,
+    //   value,
+    // });
+    // console.log("📄 LessonEditor - Lesson actuel:", editedLesson);
 
     setEditedLesson((prevLesson) => {
       // Gestion spéciale pour les objets imbriqués comme assignmentData
@@ -201,20 +201,20 @@ const LessonEditor = ({ lesson, onUpdateLesson }: Props) => {
         content: newContent,
       };
 
-      console.log("📄 LessonEditor - Nouvelle lesson créée:", newLesson);
-      console.log("🔍 CONTENU de newLesson.content:", newLesson.content);
+      // console.log("📄 LessonEditor - Nouvelle lesson créée:", newLesson);
+      // console.log("🔍 CONTENU de newLesson.content:", newLesson.content);
       
       // Logs spécifiques pour assignmentData
       if (field === 'assignmentData') {
-        console.log("🔍 AssignmentData complet:", newLesson.content.assignmentData);
-        console.log("🔍 localInstructionDocument:", newLesson.content.assignmentData?.localInstructionDocument);
+        // console.log("🔍 AssignmentData complet:", newLesson.content.assignmentData);
+        // console.log("🔍 localInstructionDocument:", newLesson.content.assignmentData?.localInstructionDocument);
       }
 
       return newLesson;
     });
 
     setRenderKey((prev) => prev + 1); // Force re-render
-    console.log("📄 LessonEditor - handleContentChange terminé");
+    // console.log("📄 LessonEditor - handleContentChange terminé");
   };
 
   const handleAddResource = () => {

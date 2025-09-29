@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef } from 'react';
-import { People, Eye, Edit, StatusUp, Status, Trash } from 'iconsax-react';
+import { People, Eye, Edit, StatusUp, Status, Trash, Buildings2 } from 'iconsax-react';
 import useTitle from '@/hooks/useTitle';
 import DataTable, { type Column } from '@/components/ui/DataTable';
 import Button from '@/components/ui/Button';
@@ -37,6 +37,16 @@ const AdminUsers = () => {
     const currentUserId = getCurrentUserId();
     return userId === currentUserId;
   };
+
+  // Fonction utilitaire pour vérifier si un utilisateur a un rôle spécifique
+  const userHasRole = (user: User, roleToCheck: string) => {
+    if (roleToCheck === 'organization') {
+      // Pour le rôle organisation, vérifier dans le tableau roles
+      return user.roles && user.roles.includes('organization');
+    }
+    // Pour les autres rôles, vérifier le rôle principal
+    return user.role === roleToCheck;
+  };
   const userFormModalRef = useRef<ModalRef>(null);
   const userDetailsModalRef = useRef<ModalRef>(null);
   const confirmationModalRef = useRef<ModalRef>(null);
@@ -51,7 +61,7 @@ const AdminUsers = () => {
   const [bulkDeleteUsers, setBulkDeleteUsers] = useState<User[]>([]);
   
   // Role tabs state
-  const [activeRole, setActiveRole] = useState<'admin' | 'instructor' | 'student' | 'all'>('all');
+  const [activeRole, setActiveRole] = useState<'admin' | 'instructor' | 'student' | 'organization' | 'all'>('all');
   
   // Filters state
   const [showFilters, setShowFilters] = useState(false);
@@ -321,6 +331,42 @@ const AdminUsers = () => {
     confirmationModalRef.current?.open();
   };
 
+  const handleAssignOrganizationRole = async (userId: string) => {
+    try {
+      const user = users.find(u => u.id === userId);
+      if (!user) return;
+
+      await userService.assignOrganizationRole(userId);
+      toast.success(
+        'Rôle organisation assigné',
+        `Le rôle organisation a été assigné à ${user.firstName} ${user.lastName}`
+      );
+      loadUsers();
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Une erreur inattendue s\'est produite';
+      toast.error('Erreur lors de l\'assignation du rôle', errorMessage);
+      console.error('Erreur lors de l\'assignation du rôle organisation:', error);
+    }
+  };
+
+  const handleRemoveOrganizationRole = async (userId: string) => {
+    try {
+      const user = users.find(u => u.id === userId);
+      if (!user) return;
+
+      await userService.removeOrganizationRole(userId);
+      toast.success(
+        'Rôle organisation retiré',
+        `Le rôle organisation a été retiré de ${user.firstName} ${user.lastName}`
+      );
+      loadUsers();
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Une erreur inattendue s\'est produite';
+      toast.error('Erreur lors du retrait du rôle', errorMessage);
+      console.error('Erreur lors du retrait du rôle organisation:', error);
+    }
+  };
+
   const confirmBulkDelete = async () => {
     if (bulkDeleteUsers.length === 0) return;
 
@@ -390,6 +436,7 @@ const AdminUsers = () => {
     admin: users.filter(u => u.role === 'admin').length,
     instructor: users.filter(u => u.role === 'instructor').length,
     student: users.filter(u => u.role === 'student').length,
+    organization: users.filter(u => userHasRole(u, 'organization')).length,
   };
 
   // Calculate statistics for overview cards
@@ -410,14 +457,14 @@ const AdminUsers = () => {
   // Apply filters to users
   const filteredUsers = users.filter(user => {
     // Active role filter
-    if (activeRole !== 'all' && user.role !== activeRole) {
+    if (activeRole !== 'all' && !userHasRole(user, activeRole)) {
       return false;
     }
 
     // Search filter
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
-      const matchesSearch = 
+      const matchesSearch =
         user.firstName.toLowerCase().includes(searchLower) ||
         user.lastName.toLowerCase().includes(searchLower) ||
         user.email.toLowerCase().includes(searchLower);
@@ -425,7 +472,7 @@ const AdminUsers = () => {
     }
 
     // Role filter (from advanced filters)
-    if (filters.role && user.role !== filters.role) {
+    if (filters.role && !userHasRole(user, filters.role)) {
       return false;
     }
 
@@ -516,17 +563,26 @@ const AdminUsers = () => {
       key: 'role',
       title: 'Rôle',
       sortable: true,
-      render: (role) => (
-        <Badge 
-          variant={
-            role === 'admin' ? 'danger' :
-            role === 'instructor' ? 'primary' : 'success'
-          }
-          size="sm"
-        >
-          {role === 'admin' ? 'Administrateur' :
-           role === 'instructor' ? 'Instructeur' : 'Étudiant'}
-        </Badge>
+      render: (role, user) => (
+        <div className="flex flex-col items-start space-y-1">
+          <Badge
+            variant={
+              role === 'admin' ? 'danger' :
+              role === 'instructor' ? 'primary' :
+              role === 'organization' ? 'warning' : 'success'
+            }
+            size="sm"
+          >
+            {role === 'admin' ? 'Administrateur' :
+             role === 'instructor' ? 'Instructeur' :
+             role === 'organization' ? 'Organisation' : 'Étudiant'}
+          </Badge>
+          {user.roles && user.roles.includes('organization') && user.role !== 'organization' && (
+            <Badge variant="default" size="sm" className="text-xs">
+              + Organisation
+            </Badge>
+          )}
+        </div>
       )
     },
     {
@@ -560,9 +616,9 @@ const AdminUsers = () => {
     {
       key: 'actions',
       title: 'Actions',
-      width: '200px',
+      width: '250px',
       render: (_, user) => (
-        <div className="flex items-center space-x-2 justify-end">
+        <div className="flex items-center space-x-1 justify-end">
           <Button
             onClick={() => handleViewUser(user)}
             variant="ghost"
@@ -582,6 +638,31 @@ const AdminUsers = () => {
           >
             <Edit size={16} color="currentColor" />
           </Button>
+
+          {/* Organisation role management - only for instructors */}
+          {user.role === 'instructor' && (
+            user.roles && user.roles.includes('organization') ? (
+              <Button
+                onClick={() => handleRemoveOrganizationRole(user.id)}
+                variant="ghost"
+                size="sm"
+                className="p-2 text-orange-600 hover:text-orange-800 hover:bg-orange-50 rounded-lg"
+                title="Retirer le rôle organisation"
+              >
+                <Buildings2 size={16} color="currentColor" />
+              </Button>
+            ) : (
+              <Button
+                onClick={() => handleAssignOrganizationRole(user.id)}
+                variant="ghost"
+                size="sm"
+                className="p-2 text-purple-600 hover:text-purple-800 hover:bg-purple-50 rounded-lg"
+                title="Assigner le rôle organisation"
+              >
+                <Buildings2 size={16} color="currentColor" />
+              </Button>
+            )
+          )}
 
           <Button
             onClick={() => handleToggleUserStatus(user.id, user.isActive)}

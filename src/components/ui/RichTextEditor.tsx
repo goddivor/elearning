@@ -144,7 +144,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const insertImageAtCursor = (imageUrl: string, altText: string) => {
     if (disabled) return;
     
-    console.log('🖼️ RichTextEditor - insertImageAtCursor appelé', {imageUrl, altText, imageWidth, imageHeight});
+    // console.log('🖼️ RichTextEditor - insertImageAtCursor appelé', {imageUrl, altText, imageWidth, imageHeight});
     
     // Calculer les styles de taille
     let sizeStyle = '';
@@ -295,7 +295,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const handleCreateLink = () => {
     if (disabled) return;
     
-    console.log('🔗 RichTextEditor - handleCreateLink appelé');
+    // console.log('🔗 RichTextEditor - handleCreateLink appelé');
     
     // Sauvegarder la position du curseur
     saveCursorPosition();
@@ -303,12 +303,12 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     const selection = window.getSelection();
     if (selection && selection.toString()) {
       // Cas avec texte sélectionné
-      console.log('🔗 Texte sélectionné:', selection.toString());
+      // console.log('🔗 Texte sélectionné:', selection.toString());
       setSelectedText(selection.toString());
       setLinkInputType('with-text');
     } else {
       // Cas sans texte sélectionné
-      console.log('🔗 Pas de texte sélectionné');
+      // console.log('🔗 Pas de texte sélectionné');
       setSelectedText('');
       setLinkInputType('without-text');
     }
@@ -323,7 +323,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     if (selection && selection.rangeCount > 0) {
       const range = selection.getRangeAt(0);
       setSavedRange(range.cloneRange());
-      console.log('🎯 RichTextEditor - Position du curseur sauvegardée');
+      // console.log('🎯 RichTextEditor - Position du curseur sauvegardée');
     }
   };
   
@@ -335,7 +335,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         selection.removeAllRanges();
         selection.addRange(savedRange);
         editorRef.current.focus();
-        console.log('🎯 RichTextEditor - Position du curseur restaurée');
+        // console.log('🎯 RichTextEditor - Position du curseur restaurée');
       }
     }
   };
@@ -362,12 +362,12 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       return;
     }
     
-    console.log('🔗 RichTextEditor - insertLink appelé', {
-      linkUrl, 
-      selectedText, 
-      linkInputType, 
-      hasSavedRange: !!savedRange
-    });
+    // console.log('🔗 RichTextEditor - insertLink appelé', {
+    //   linkUrl, 
+    //   selectedText, 
+    //   linkInputType, 
+    //   hasSavedRange: !!savedRange
+    // });
     
     try {
       if (linkInputType === 'with-text' && selectedText) {
@@ -493,11 +493,11 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const handleImageUpload = (file: File) => {
     if (disabled) return;
     
-    console.log('🖼️ RichTextEditor - handleImageUpload appelé avec:', {
-      name: file.name,
-      type: file.type,
-      size: file.size
-    });
+    // console.log('🖼️ RichTextEditor - handleImageUpload appelé avec:', {
+    //   name: file.name,
+    //   type: file.type,
+    //   size: file.size
+    // });
     
     // Validate file using our media service
     const validation = mediaService.validateFile(file, mediaService.getValidationOptions('image'));
@@ -516,7 +516,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       id: imageId
     };
 
-    console.log('🖼️ RichTextEditor - Image locale créée:', localImage);
+    // console.log('🖼️ RichTextEditor - Image locale créée:', localImage);
     
     // Ajouter l'image à la liste des images locales
     const updatedLocalImages = [...localImages, localImage];
@@ -531,7 +531,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && !disabled) {
-      console.log('🖼️ RichTextEditor - Fichier sélectionné via input:', file.name);
+      // console.log('🖼️ RichTextEditor - Fichier sélectionné via input:', file.name);
       handleImageUpload(file);
     }
   };

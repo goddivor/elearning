@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { Add, Copy, Eye, EyeSlash, Trash, Edit } from 'iconsax-react';
 import Button from '@/components/ui/Button';
@@ -7,6 +8,8 @@ import Modal from '@/components/ui/Modal';
 import { useToast } from '@/contexts/toast-context';
 import { organizationService } from '@/services/organizationService';
 import type { Organization } from '@/services/organizationService';
+import { avatarService } from '@/services/avatarService';
+import UserSelect from '@/components/ui/UserSelect';
 
 
 const AdminOrganizations: React.FC = () => {
@@ -30,20 +33,34 @@ const AdminOrganizations: React.FC = () => {
     isActive: true
   });
 
-  // Load organizations from API
+  // States pour la gestion des gestionnaires
+  const [availableManagers, setAvailableManagers] = useState<Array<{
+    _id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    avatar?: string;
+  }>>([]);
+  const [selectedManagerId, setSelectedManagerId] = useState<string>('');
+
+  // Load organizations and managers from API
   useEffect(() => {
-    const loadOrganizations = async () => {
+    const loadData = async () => {
       try {
-        const data = await organizationService.getAll();
-        setOrganizations(data);
+        const [organizationsData, managersData] = await Promise.all([
+          organizationService.getAll(),
+          organizationService.getAvailableManagers()
+        ]);
+        setOrganizations(organizationsData);
+        setAvailableManagers(managersData);
       } catch {
-        showToast('Erreur lors du chargement des organisations', 'error');
+        showToast('Erreur lors du chargement des données', 'error');
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadOrganizations();
+    loadData();
   }, [showToast]);
 
   const getTypeLabel = (type: Organization['type']) => {
@@ -66,11 +83,14 @@ const AdminOrganizations: React.FC = () => {
     return colors[type] || 'bg-gray-100 text-gray-700';
   };
 
+  const truncateText = (text: string, maxLength: number = 15): string => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+  };
+
   const handleToggleStatus = async (org: Organization) => {
     try {
-      console.log('Toggle status for org ID:', org.id);
       const updatedOrg = await organizationService.toggleStatus(org.id);
-      console.log('Updated org:', updatedOrg);
       setOrganizations(prev =>
         prev.map(o => o.id === org.id ? updatedOrg : o)
       );
@@ -79,20 +99,16 @@ const AdminOrganizations: React.FC = () => {
         'success'
       );
     } catch (error) {
-      console.error('Error toggling status:', error);
       showToast('Erreur lors de la modification du statut', 'error');
     }
   };
 
   const handleDuplicate = async (org: Organization) => {
     try {
-      console.log('Duplicate org ID:', org.id);
       const duplicatedOrg = await organizationService.duplicate(org.id);
-      console.log('Duplicated org:', duplicatedOrg);
       setOrganizations(prev => [duplicatedOrg, ...prev]);
       showToast('Organisation dupliquée avec succès', 'success');
     } catch (error) {
-      console.error('Error duplicating:', error);
       showToast('Erreur lors de la duplication', 'error');
     }
   };
@@ -108,6 +124,7 @@ const AdminOrganizations: React.FC = () => {
       website: '',
       isActive: true
     });
+    setSelectedManagerId('');
   };
 
   const handleCreate = async () => {
@@ -120,7 +137,7 @@ const AdminOrganizations: React.FC = () => {
       }
 
       // Créer la nouvelle organisation via API
-      const newOrg = await organizationService.create({
+      let newOrg = await organizationService.create({
         name: formData.name,
         description: formData.description,
         type: formData.type,
@@ -131,8 +148,15 @@ const AdminOrganizations: React.FC = () => {
         isActive: formData.isActive
       });
 
+      // Si un gestionnaire est sélectionné, l'assigner
+      if (selectedManagerId) {
+        newOrg = await organizationService.assignManager(newOrg.id, selectedManagerId);
+        showToast('Organisation créée et gestionnaire assigné avec succès', 'success');
+      } else {
+        showToast('Organisation créée avec succès', 'success');
+      }
+
       setOrganizations(prev => [newOrg, ...prev]);
-      showToast('Organisation créée avec succès', 'success');
       setShowCreateModal(false);
       resetForm();
     } catch {
@@ -166,7 +190,7 @@ const AdminOrganizations: React.FC = () => {
         return;
       }
 
-      console.log('Update org ID:', selectedOrg.id, 'with data:', formData);
+      // console.log('Update org ID:', selectedOrg.id, 'with data:', formData);
       // Mettre à jour l'organisation via API
       const updatedOrg = await organizationService.update(selectedOrg.id, {
         name: formData.name,
@@ -179,7 +203,6 @@ const AdminOrganizations: React.FC = () => {
         isActive: formData.isActive
       });
 
-      console.log('Updated org result:', updatedOrg);
       setOrganizations(prev =>
         prev.map(org => org.id === selectedOrg.id ? updatedOrg : org)
       );
@@ -188,7 +211,6 @@ const AdminOrganizations: React.FC = () => {
       setSelectedOrg(null);
       resetForm();
     } catch (error) {
-      console.error('Error updating:', error);
       showToast('Erreur lors de la modification de l\'organisation', 'error');
     }
   };
@@ -213,8 +235,18 @@ const AdminOrganizations: React.FC = () => {
       title: 'Nom de l\'organisation',
       render: (_value: unknown, org: Organization) => (
         <div>
-          <div className="font-medium text-gray-900">{org.name}</div>
-          <div className="text-sm text-gray-500">{org.description}</div>
+          <div
+            className="font-medium text-gray-900"
+            title={org.name}
+          >
+            {truncateText(org.name, 40)}
+          </div>
+          <div
+            className="text-sm text-gray-500"
+            title={org.description}
+          >
+            {truncateText(org.description, 25)}
+          </div>
         </div>
       )
     },
@@ -234,6 +266,43 @@ const AdminOrganizations: React.FC = () => {
         <div>
           <div className="text-sm text-gray-900">{org.contactEmail}</div>
           <div className="text-sm text-gray-500">{org.contactPhone}</div>
+        </div>
+      )
+    },
+    {
+      key: 'manager',
+      title: 'Gestionnaire',
+      render: (_value: unknown, org: Organization) => (
+        <div className="flex items-center">
+          {org.manager ? (
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                {org.manager.avatar ? (
+                  <img
+                    src={avatarService.getAvatarUrl(org.manager.avatar)}
+                    alt={`${org.manager.firstName || ''} ${org.manager.lastName || ''}`}
+                    className="w-full h-full object-cover"
+                    title={`${org.manager.firstName || ''} ${org.manager.lastName || ''}`}
+                  />
+                ) : (
+                  <span
+                    className="text-xs font-medium text-gray-600"
+                    title={`${org.manager.firstName || ''} ${org.manager.lastName || ''}`}
+                  >
+                    {org.manager.firstName?.[0] || '?'}{org.manager.lastName?.[0] || '?'}
+                  </span>
+                )}
+              </div>
+              <span
+                className="text-sm text-gray-900 cursor-help"
+                title={`${org.manager.firstName || ''} ${org.manager.lastName || ''} (${org.manager.email || ''})`}
+              >
+                {org.manager.firstName || 'N/A'} {org.manager.lastName || ''}
+              </span>
+            </div>
+          ) : (
+            <span className="text-sm text-gray-400">Non assigné</span>
+          )}
         </div>
       )
     },
@@ -425,6 +494,24 @@ const AdminOrganizations: React.FC = () => {
               placeholder="https://www.organisation.fr"
             />
           </div>
+
+          {/* Sélection du gestionnaire */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Gestionnaire (optionnel)
+            </label>
+            <UserSelect
+              users={availableManagers}
+              value={selectedManagerId}
+              onChange={setSelectedManagerId}
+              placeholder="Sélectionnez un gestionnaire"
+              className="w-full"
+            />
+            <p className="text-sm text-gray-500 mt-1">
+              Sélectionnez un instructeur pour qu'il devienne gestionnaire de cette organisation
+            </p>
+          </div>
+
           <div className="flex justify-end space-x-3 pt-4">
             <Button
               variant="outline"

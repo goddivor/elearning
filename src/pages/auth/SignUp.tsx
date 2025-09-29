@@ -39,8 +39,7 @@ const SignUp = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'student' as 'student' | 'instructor',
-    acceptTerms: false
+    role: 'student' as 'student' | 'instructor'
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -97,9 +96,6 @@ const SignUp = () => {
       newErrors.confirmPassword = 'Les mots de passe ne correspondent pas';
     }
 
-    if (!formData.acceptTerms) {
-      newErrors.acceptTerms = 'Vous devez accepter les conditions d\'utilisation';
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -318,30 +314,18 @@ const SignUp = () => {
             </div>
           </div>
 
-          {/* Terms and Conditions */}
-          <div className="flex items-start">
-            <input
-              id="acceptTerms"
-              name="acceptTerms"
-              type="checkbox"
-              checked={formData.acceptTerms}
-              onChange={handleChange}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-1"
-            />
-            <label htmlFor="acceptTerms" className="ml-2 block text-sm text-gray-900">
-              J'accepte les{' '}
-              <a href="#" className="text-blue-600 hover:text-blue-500">
-                conditions d'utilisation
-              </a>{' '}
-              et la{' '}
-              <a href="#" className="text-blue-600 hover:text-blue-500">
-                politique de confidentialité
-              </a>
-            </label>
+          {/* Organization Registration Link */}
+          <div className="text-center">
+            <p className="text-sm text-gray-900">
+              Ou{' '}
+              <Link
+                to="/signup-organization"
+                className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
+              >
+                s'enregistrer en tant qu'organisation
+              </Link>
+            </p>
           </div>
-          {errors.acceptTerms && (
-            <p className="text-sm text-red-600">{errors.acceptTerms}</p>
-          )}
 
           <div>
             <Button

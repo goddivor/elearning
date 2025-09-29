@@ -10,8 +10,29 @@ export interface Organization {
   contactPhone: string;
   isActive: boolean;
   website?: string;
+  manager?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    avatar?: string;
+  };
   createdAt: string;
   updatedAt: string;
+}
+
+// Type pour les données brutes du backend MongoDB
+interface RawOrganization extends Omit<Organization, 'id' | 'manager'> {
+  _id?: string;
+  id?: string;
+  manager?: {
+    _id?: string;
+    id?: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    avatar?: string;
+  };
 }
 
 export interface CreateOrganizationData {
@@ -48,9 +69,13 @@ export const organizationService = {
     const url = queryString ? `/organizations?${queryString}` : '/organizations';
 
     const response = await api.get(url);
-    return response.data.map((org: any) => ({
+    return response.data.map((org: RawOrganization): Organization => ({
       ...org,
-      id: org._id || org.id
+      id: org._id || org.id || '',
+      manager: org.manager ? {
+        ...org.manager,
+        id: org.manager._id || org.manager.id || ''
+      } : undefined
     }));
   },
 
@@ -59,10 +84,14 @@ export const organizationService = {
    */
   async getById(id: string): Promise<Organization> {
     const response = await api.get(`/organizations/${id}`);
-    const org = response.data;
+    const org: RawOrganization = response.data;
     return {
       ...org,
-      id: org._id || org.id
+      id: org._id || org.id || '',
+      manager: org.manager ? {
+        ...org.manager,
+        id: org.manager._id || org.manager.id || ''
+      } : undefined
     };
   },
 
@@ -114,6 +143,33 @@ export const organizationService = {
    */
   async duplicate(id: string): Promise<Organization> {
     const response = await api.post(`/organizations/${id}/duplicate`);
+    const org = response.data;
+    return {
+      ...org,
+      id: org._id || org.id
+    };
+  },
+
+  /**
+   * Récupérer les instructeurs disponibles comme gestionnaires
+   */
+  async getAvailableManagers(): Promise<Array<{
+    _id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  }>> {
+    const response = await api.get('/organizations/available-managers');
+    return response.data;
+  },
+
+  /**
+   * Assigner un gestionnaire à une organisation
+   */
+  async assignManager(organizationId: string, managerId: string): Promise<Organization> {
+    const response = await api.patch(`/organizations/${organizationId}/assign-manager`, {
+      managerId
+    });
     const org = response.data;
     return {
       ...org,

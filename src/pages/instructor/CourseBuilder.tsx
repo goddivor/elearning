@@ -551,8 +551,8 @@ const CourseBuilder = () => {
 
       // Sauvegarder les modules et leçons
       const savedCourseId = savedCourse.id || (savedCourse as { _id?: string })._id;
-      console.log('🔍 CourseBuilder - savedCourse:', savedCourse);
-      console.log('🔍 CourseBuilder - courseId pour modules:', savedCourseId);
+      // console.log('🔍 CourseBuilder - savedCourse:', savedCourse);
+      // console.log('🔍 CourseBuilder - courseId pour modules:', savedCourseId);
 
       if (!savedCourseId) {
         throw new Error('ID du cours non trouvé après sauvegarde');
@@ -601,10 +601,10 @@ const CourseBuilder = () => {
       module.lessons.forEach(lesson => {
         // Upload des documents normaux
         if (lesson.content.localDocument) {
-          console.log('📄 Upload document - leçon:', lesson.title, 'fichier:', lesson.content.localDocument);
+          // console.log('📄 Upload document - leçon:', lesson.title, 'fichier:', lesson.content.localDocument);
           const uploadPromise = mediaService.uploadDocument(lesson.content.localDocument.file)
             .then(uploadedFile => {
-              console.log('📄 Document uploadé avec succès:', uploadedFile);
+              // console.log('📄 Document uploadé avec succès:', uploadedFile);
               // Mettre à jour les données de la leçon avec l'URL du fichier uploadé
               lesson.content.documentUrl = uploadedFile.url;
               lesson.content.documentName = uploadedFile.originalName;
@@ -623,10 +623,10 @@ const CourseBuilder = () => {
 
         // Upload des documents d'instructions pour les devoirs (assignments)
         if (lesson.type === 'assignment' && lesson.content.assignmentData?.localInstructionDocument) {
-          console.log('📄 Upload document devoir - leçon:', lesson.title, 'fichier:', lesson.content.assignmentData.localInstructionDocument);
+          // console.log('📄 Upload document devoir - leçon:', lesson.title, 'fichier:', lesson.content.assignmentData.localInstructionDocument);
           const uploadPromise = mediaService.uploadDocument(lesson.content.assignmentData.localInstructionDocument.file)
             .then(uploadedFile => {
-              console.log('📄 Document devoir uploadé avec succès:', uploadedFile);
+              // console.log('📄 Document devoir uploadé avec succès:', uploadedFile);
               // Mettre à jour les données du devoir avec l'URL du fichier uploadé
               if (lesson.content.assignmentData) {
                 lesson.content.assignmentData.instructionDocumentUrl = uploadedFile.url;
@@ -650,10 +650,10 @@ const CourseBuilder = () => {
           lesson.content.localImages.forEach(localImage => {
             const imageUploadPromise = mediaService.uploadFile(localImage.file)
               .then(uploadedImage => {
-                console.log('🖼️ CourseBuilder - Remplacement URL dans contenu:', {
-                  localUrl: localImage.localUrl,
-                  uploadedUrl: uploadedImage.url
-                });
+                // console.log('🖼️ CourseBuilder - Remplacement URL dans contenu:', {
+                //   localUrl: localImage.localUrl,
+                //   uploadedUrl: uploadedImage.url
+                // });
                 
                 // Remplacer l'URL locale par l'URL uploadée dans le contenu HTML
                 if (lesson.content.textContent) {
@@ -686,8 +686,8 @@ const CourseBuilder = () => {
 
   const saveModulesAndLessons = async (courseId: string) => {
     try {
-      console.log('🎯 saveModulesAndLessons - courseId reçu:', courseId);
-      console.log('🎯 saveModulesAndLessons - modules à sauvegarder:', modules.length);
+      // console.log('🎯 saveModulesAndLessons - courseId reçu:', courseId);
+      // console.log('🎯 saveModulesAndLessons - modules à sauvegarder:', modules.length);
 
       // Sauvegarder tous les modules
       const modulePromises = modules.map(async (module, index) => {
@@ -700,27 +700,27 @@ const CourseBuilder = () => {
           isActive: module.isActive
         };
 
-        console.log('📦 Module à sauvegarder:', moduleData);
+        // console.log('📦 Module à sauvegarder:', moduleData);
 
         let savedModule;
         if (module.id && module.id.startsWith('module-')) {
           // Nouveau module à créer
           savedModule = await moduleService.createModule(moduleData);
-          console.log('📦 Nouveau module créé:', savedModule);
+          // console.log('📦 Nouveau module créé:', savedModule);
         } else if (module.id) {
           // Module existant à mettre à jour
           savedModule = await moduleService.updateModule(module.id, moduleData);
-          console.log('📦 Module mis à jour:', savedModule);
+          // console.log('📦 Module mis à jour:', savedModule);
         } else {
           // Module sans ID, créer nouveau
           savedModule = await moduleService.createModule(moduleData);
-          console.log('📦 Module sans ID créé:', savedModule);
+          // console.log('📦 Module sans ID créé:', savedModule);
         }
 
         // Sauvegarder les leçons de ce module
         if (module.lessons.length > 0) {
           const lessonPromises = module.lessons.map(async (lesson, lessonIndex) => {
-            console.log('🎯 Module ID pour leçons:', savedModule.id || (savedModule as { _id?: string })._id);
+            // console.log('🎯 Module ID pour leçons:', savedModule.id || (savedModule as { _id?: string })._id);
 
             const moduleId = savedModule.id || (savedModule as { _id?: string })._id;
             const lessonData = lessonService.convertToCreateDto({
@@ -729,7 +729,7 @@ const CourseBuilder = () => {
               order: lessonIndex
             });
 
-            console.log('📝 Leçon à sauvegarder:', lessonData);
+            // console.log('📝 Leçon à sauvegarder:', lessonData);
 
             if (lesson.id && lesson.id.startsWith('lesson-')) {
               // Nouvelle leçon à créer
@@ -787,8 +787,8 @@ const CourseBuilder = () => {
 
       // Sauvegarder les modules et leçons
       const savedCourseId = savedCourse.id || (savedCourse as { _id?: string })._id;
-      console.log('🔍 CourseBuilder DRAFT - savedCourse:', savedCourse);
-      console.log('🔍 CourseBuilder DRAFT - courseId pour modules:', savedCourseId);
+      // console.log('🔍 CourseBuilder DRAFT - savedCourse:', savedCourse);
+      // console.log('🔍 CourseBuilder DRAFT - courseId pour modules:', savedCourseId);
 
       if (!savedCourseId) {
         throw new Error('ID du cours non trouvé après sauvegarde (draft)');

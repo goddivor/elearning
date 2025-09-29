@@ -1,5 +1,5 @@
 import api from './api';
-import type { LoginRequest, RegisterRequest, AuthResponse, User } from '@/types/auth';
+import type { LoginRequest, RegisterRequest, RegisterOrganizationRequest, AuthResponse, User } from '@/types/auth';
 
 export class AuthService {
   /**
@@ -94,15 +94,33 @@ export class AuthService {
   }
 
   /**
+   * Inscription organisation (utilisateur + organisation)
+   */
+  static async registerOrganization(userData: RegisterOrganizationRequest): Promise<AuthResponse> {
+    try {
+      const response = await api.post<AuthResponse>('/auth/register-organization', userData);
+
+      // Stocker le token et les données utilisateur automatiquement après inscription
+      localStorage.setItem('access_token', response.data.access_token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+
+      return response.data;
+    } catch (error) {
+      console.error('Erreur lors de l\'inscription organisation:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Mettre à jour le profil utilisateur
    */
   static async updateProfile(userData: Partial<User>): Promise<User> {
     try {
       const response = await api.put<User>('/users/profile', userData);
-      
+
       // Mettre à jour les données locales
       localStorage.setItem('user', JSON.stringify(response.data));
-      
+
       return response.data;
     } catch (error) {
       console.error('Erreur lors de la mise à jour du profil:', error);
