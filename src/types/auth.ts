@@ -1,11 +1,13 @@
 export interface User {
   _id: string;
+  id?: string; // Alias pour _id (rétro-compatibilité)
   email: string;
   firstName: string;
   lastName: string;
   role: 'student' | 'instructor' | 'admin' | 'organization';
   isActive: boolean;
   avatar?: string;
+  bannerImage?: string;
   createdAt: string;
   updatedAt: string;
 }

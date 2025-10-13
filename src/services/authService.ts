@@ -8,12 +8,21 @@ export class AuthService {
   static async login(credentials: LoginRequest): Promise<AuthResponse> {
     try {
       const response = await api.post<AuthResponse>('/auth/login', credentials);
-      
+
+      // Ajouter id comme alias de _id pour compatibilité
+      const userData = {
+        ...response.data.user,
+        id: response.data.user._id
+      };
+
       // Stocker le token et les données utilisateur
       localStorage.setItem('access_token', response.data.access_token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-      
-      return response.data;
+      localStorage.setItem('user', JSON.stringify(userData));
+
+      return {
+        ...response.data,
+        user: userData
+      };
     } catch (error) {
       console.error('Erreur lors de la connexion:', error);
       throw error;
@@ -26,12 +35,21 @@ export class AuthService {
   static async register(userData: RegisterRequest): Promise<AuthResponse> {
     try {
       const response = await api.post<AuthResponse>('/auth/register', userData);
-      
+
+      // Ajouter id comme alias de _id pour compatibilité
+      const userWithId = {
+        ...response.data.user,
+        id: response.data.user._id
+      };
+
       // Stocker le token et les données utilisateur automatiquement après inscription
       localStorage.setItem('access_token', response.data.access_token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-      
-      return response.data;
+      localStorage.setItem('user', JSON.stringify(userWithId));
+
+      return {
+        ...response.data,
+        user: userWithId
+      };
     } catch (error) {
       console.error('Erreur lors de l\'inscription:', error);
       throw error;
@@ -82,11 +100,17 @@ export class AuthService {
   static async getProfile(): Promise<User> {
     try {
       const response = await api.get<User>('/users/profile');
-      
+
+      // Ajouter id comme alias de _id pour compatibilité
+      const userData = {
+        ...response.data,
+        id: response.data._id
+      };
+
       // Mettre à jour les données locales
-      localStorage.setItem('user', JSON.stringify(response.data));
-      
-      return response.data;
+      localStorage.setItem('user', JSON.stringify(userData));
+
+      return userData;
     } catch (error) {
       console.error('Erreur lors de la récupération du profil:', error);
       throw error;
@@ -100,11 +124,20 @@ export class AuthService {
     try {
       const response = await api.post<AuthResponse>('/auth/register-organization', userData);
 
+      // Ajouter id comme alias de _id pour compatibilité
+      const userWithId = {
+        ...response.data.user,
+        id: response.data.user._id
+      };
+
       // Stocker le token et les données utilisateur automatiquement après inscription
       localStorage.setItem('access_token', response.data.access_token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      localStorage.setItem('user', JSON.stringify(userWithId));
 
-      return response.data;
+      return {
+        ...response.data,
+        user: userWithId
+      };
     } catch (error) {
       console.error('Erreur lors de l\'inscription organisation:', error);
       throw error;

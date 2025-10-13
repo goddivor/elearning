@@ -13,6 +13,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -53,8 +54,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const response = await AuthService.login({ email, password });
-    setUser(response.user);
+    await AuthService.login({ email, password });
+    // Récupérer le profil complet incluant l'avatar
+    const freshUserData = await AuthService.getProfile();
+    setUser(freshUserData);
   };
 
   const logout = () => {
