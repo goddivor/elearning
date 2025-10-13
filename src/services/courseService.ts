@@ -322,6 +322,89 @@ class CourseService {
     const categories = [...new Set(courses.map(course => course.category))];
     return categories.sort();
   }
+
+  // Récupérer les statistiques d'un instructeur spécifique
+  async getInstructorStats(): Promise<{
+    totalCourses: number;
+    publishedCourses: number;
+    draftCourses: number;
+    totalStudents: number;
+    averageRating: number;
+  }> {
+    try {
+      const courses = await this.getCoursesByInstructor();
+
+      return {
+        totalCourses: courses.length,
+        publishedCourses: courses.filter(c => c.isPublished).length,
+        draftCourses: courses.filter(c => !c.isPublished).length,
+        totalStudents: courses.reduce((sum, course) => sum + course.enrolledStudents, 0),
+        averageRating: courses.length > 0
+          ? courses.reduce((sum, course) => sum + course.averageRating, 0) / courses.length
+          : 0,
+      };
+    } catch (error) {
+      console.error('Erreur lors de la récupération des statistiques instructeur:', error);
+      throw error;
+    }
+  }
+
+  // Récupérer tous les cours publiés (pour le catalogue public)
+  async getPublishedCourses(): Promise<Course[]> {
+    const response = await api.get('/courses'); // Sans admin=true, retourne uniquement les cours publiés
+
+    return response.data.map((course: CourseBackendResponse) => ({
+      ...course,
+      id: course._id || course.id || '',
+      instructor: course.instructorId ? {
+        id: course.instructorId._id,
+        firstName: course.instructorId.firstName,
+        lastName: course.instructorId.lastName,
+        email: course.instructorId.email,
+        avatar: course.instructorId.avatar
+      } : course.instructor || undefined,
+      thumbnailUrl: getFullFileUrl(course.thumbnail || course.thumbnailUrl),
+      isPublished: course.status === 'published'
+    }));
+  }
+
+  // Récupérer les catégories des cours publiés uniquement
+  async getPublishedCategories(): Promise<string[]> {
+    const courses = await this.getPublishedCourses();
+    const categories = [...new Set(courses.map(course => course.category))];
+    return categories.filter(cat => cat).sort();
+  }
+
+  // Récupérer les instructeurs qui ont des cours publiés
+  async getInstructorsWithPublishedCourses(): Promise<Array<{
+    id: string;
+    firstName: string;
+    lastName: string;
+    coursesCount: number;
+  }>> {
+    const courses = await this.getPublishedCourses();
+    const instructorsMap = new Map();
+
+    courses.forEach(course => {
+      if (course.instructor) {
+        const key = course.instructor.id;
+        if (instructorsMap.has(key)) {
+          instructorsMap.get(key).coursesCount++;
+        } else {
+          instructorsMap.set(key, {
+            id: course.instructor.id,
+            firstName: course.instructor.firstName,
+            lastName: course.instructor.lastName,
+            coursesCount: 1
+          });
+        }
+      }
+    });
+
+    return Array.from(instructorsMap.values()).sort((a, b) =>
+      a.firstName.localeCompare(b.firstName)
+    );
+  }
 }
 
 export const courseService = new CourseService();

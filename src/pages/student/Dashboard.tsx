@@ -2,16 +2,20 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import useTitle from '@/hooks/useTitle';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/toast-context';
 import { EnrollmentService, type Enrollment, type EnrollmentStats } from '@/services/enrollmentService';
+import { followService, type Follow } from '@/services/followService';
 import { StudentStatsCards } from '@/components/student/StudentStatsCards';
 import { EnrolledCourseCard } from '@/components/student/EnrolledCourseCard';
+import { InstructorCard } from '@/components/student/InstructorCard';
 import Button from '@/components/ui/Button';
-import { ArrowRight, Book1, SearchNormal1 } from 'iconsax-react';
+import { ArrowRight, Book1, SearchNormal1, People } from 'iconsax-react';
 
 const StudentDashboard = () => {
   useTitle("Dashboard Étudiant");
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { success, error: showError } = useToast();
 
   const [stats, setStats] = useState<EnrollmentStats>({
     totalCourses: 0,
@@ -22,6 +26,7 @@ const StudentDashboard = () => {
   });
   const [recentCourses, setRecentCourses] = useState<Enrollment[]>([]);
   const [inProgressCourses, setInProgressCourses] = useState<Enrollment[]>([]);
+  const [followedInstructors, setFollowedInstructors] = useState<Follow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,22 +39,39 @@ const StudentDashboard = () => {
       setIsLoading(true);
       setError(null);
 
-      // Charger les statistiques et cours en parallèle
-      const [statsData, recentData, inProgressData] = await Promise.all([
+      // Charger les statistiques, cours et instructeurs en parallèle
+      const [statsData, recentData, inProgressData, followsData] = await Promise.all([
         EnrollmentService.getEnrollmentStats(),
         EnrollmentService.getRecentCourses(),
-        EnrollmentService.getInProgressCourses()
+        EnrollmentService.getInProgressCourses(),
+        followService.getMyFollowing().catch(() => []) // Ne pas échouer si pas d'instructeurs
       ]);
 
       setStats(statsData);
       setRecentCourses(recentData);
       setInProgressCourses(inProgressData);
+      setFollowedInstructors(followsData);
     } catch (err) {
       console.error('Error loading dashboard data:', err);
       setError('Impossible de charger les données du tableau de bord');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleUnfollowInstructor = async (instructorId: string) => {
+    try {
+      await followService.unfollowInstructor(instructorId);
+      setFollowedInstructors(prev => prev.filter(f => f.instructorId._id !== instructorId));
+      success('Ne plus suivre', 'Vous ne suivez plus cet instructeur');
+    } catch (err) {
+      console.error('Error unfollowing instructor:', err);
+      showError('Erreur', 'Impossible de ne plus suivre cet instructeur');
+    }
+  };
+
+  const handleViewInstructorProfile = (instructorId: string) => {
+    navigate(`/dashboard/student/instructor/${instructorId}`);
   };
 
   const handleContinueCourse = (courseId: string) => {
@@ -61,7 +83,7 @@ const StudentDashboard = () => {
   };
 
   const handleBrowseCourses = () => {
-    navigate('/courses');
+    navigate('/dashboard/student/catalog');
   };
 
   if (error) {
@@ -187,6 +209,56 @@ const StudentDashboard = () => {
             Explorer les cours
           </Button>
         </div>
+      )}
+
+      {/* Instructeurs suivis */}
+      {followedInstructors.length > 0 && (
+        <section>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <People size={24} color="#6366F1" variant="Bold" />
+              <h2 className="text-xl font-semibold text-gray-900">
+                Instructeurs suivis
+              </h2>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/dashboard/student/instructors')}
+              className="flex items-center gap-2"
+            >
+              Voir tout
+              <ArrowRight size={16} color="#6B7280" />
+            </Button>
+          </div>
+
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="bg-white p-4 rounded-lg border animate-pulse">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-14 h-14 rounded-full bg-gray-200"></div>
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {followedInstructors.slice(0, 6).map((follow) => (
+                <InstructorCard
+                  key={follow._id}
+                  instructor={follow.instructorId}
+                  onUnfollow={handleUnfollowInstructor}
+                  onViewProfile={handleViewInstructorProfile}
+                />
+              ))}
+            </div>
+          )}
+        </section>
       )}
 
       {/* Actions rapides */}

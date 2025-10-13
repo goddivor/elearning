@@ -10,6 +10,18 @@ export interface AvatarUploadResponse {
   };
 }
 
+export interface BannerUploadResponse {
+  message: string;
+  bannerUrl: string;
+  user: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    bannerImage?: string;
+  };
+}
+
 class AvatarService {
   private baseUrl = 'http://localhost:3001/api/users';
 
@@ -45,6 +57,52 @@ class AvatarService {
     }
 
     const response = await fetch(`${this.baseUrl}/avatar`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Erreur HTTP: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  async uploadBanner(file: File): Promise<BannerUploadResponse> {
+    const formData = new FormData();
+    formData.append('banner', file);
+
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      throw new Error('Token non trouvé');
+    }
+
+    const response = await fetch(`${this.baseUrl}/banner`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Erreur HTTP: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  async removeBanner(): Promise<{ message: string }> {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      throw new Error('Token non trouvé');
+    }
+
+    const response = await fetch(`${this.baseUrl}/banner`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,

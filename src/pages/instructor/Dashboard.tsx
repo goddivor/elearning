@@ -1,72 +1,64 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Book, People, Play, TrendUp, Category, Add } from "iconsax-react";
 import useTitle from "@/hooks/useTitle";
 import MetricCard from "@/components/ui/MetricCard";
 import DataTable, { type Column } from "@/components/ui/DataTable";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
-
-// Types temporaires pour les cours
-interface Course {
-  id: string;
-  title: string;
-  description: string;
-  status: "draft" | "published" | "archived";
-  studentsCount: number;
-  createdAt: string;
-  lastUpdated: string;
-}
+import { courseService, type Course } from "@/services/courseService";
+import { useToast } from "@/contexts/toast-context";
 
 interface CourseStats {
   totalCourses: number;
   publishedCourses: number;
+  draftCourses: number;
   totalStudents: number;
   averageRating: number;
 }
 
 const InstructorDashboard = () => {
   useTitle("Dashboard Instructeur");
+  const navigate = useNavigate();
+  const { error: showError } = useToast();
 
-  const [stats] = useState<CourseStats>({
-    totalCourses: 8,
-    publishedCourses: 6,
-    totalStudents: 124,
-    averageRating: 4.7,
+  const [stats, setStats] = useState<CourseStats>({
+    totalCourses: 0,
+    publishedCourses: 0,
+    draftCourses: 0,
+    totalStudents: 0,
+    averageRating: 0,
   });
 
-  const [courses] = useState<Course[]>([
-    {
-      id: "1",
-      title: "Introduction à React",
-      description:
-        "Apprenez les bases de React.js et créez vos premières applications",
-      status: "published",
-      studentsCount: 45,
-      createdAt: "2024-01-15",
-      lastUpdated: "2024-02-20",
-    },
-    {
-      id: "2",
-      title: "JavaScript Avancé",
-      description: "Maîtrisez les concepts avancés de JavaScript",
-      status: "published",
-      studentsCount: 32,
-      createdAt: "2024-02-01",
-      lastUpdated: "2024-02-18",
-    },
-    {
-      id: "3",
-      title: "TypeScript pour les débutants",
-      description: "Découvrez TypeScript et ses avantages",
-      status: "draft",
-      studentsCount: 0,
-      createdAt: "2024-02-10",
-      lastUpdated: "2024-02-15",
-    },
-  ]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [loading] = useState(false);
+  useEffect(() => {
+    loadDashboardData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      const [statsData, coursesData] = await Promise.all([
+        courseService.getInstructorStats(),
+        courseService.getCoursesByInstructor(),
+      ]);
+
+      setStats(statsData);
+      // Ne garder que les 5 cours les plus récents
+      setCourses(coursesData.slice(0, 5));
+    } catch (error) {
+      console.error("Erreur lors du chargement du dashboard:", error);
+      showError(
+        "Erreur de chargement",
+        "Impossible de charger les données du dashboard"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const courseColumns: Column<Course>[] = [
     {
@@ -82,36 +74,28 @@ const InstructorDashboard = () => {
               {course.title}
             </div>
             <div className="text-sm text-gray-500">
-              {course.description.substring(0, 50)}...
+              {course.description.length > 50
+                ? `${course.description.substring(0, 50)}...`
+                : course.description}
             </div>
           </div>
         </div>
       ),
     },
     {
-      key: "status",
+      key: "isPublished",
       title: "Statut",
-      render: (status) => (
+      render: (isPublished) => (
         <Badge
-          variant={
-            status === "published"
-              ? "success"
-              : status === "draft"
-              ? "warning"
-              : "default"
-          }
+          variant={isPublished ? "success" : "warning"}
           size="sm"
         >
-          {status === "published"
-            ? "Publié"
-            : status === "draft"
-            ? "Brouillon"
-            : "Archivé"}
+          {isPublished ? "Publié" : "Brouillon"}
         </Badge>
       ),
     },
     {
-      key: "studentsCount",
+      key: "enrolledStudents",
       title: "Étudiants",
       render: (count) => (
         <span className="text-sm font-medium text-gray-900">
@@ -120,7 +104,7 @@ const InstructorDashboard = () => {
       ),
     },
     {
-      key: "lastUpdated",
+      key: "updatedAt",
       title: "Dernière MAJ",
       render: (date) => new Date(date).toLocaleDateString("fr-FR"),
     },
@@ -146,6 +130,7 @@ const InstructorDashboard = () => {
         <Button
           className="flex items-center space-x-2"
           style={{ backgroundColor: "#1D4ED8" }}
+          onClick={() => navigate("/dashboard/instructor/courses")}
         >
           <Add color="white" size={20} />
           <span>Nouveau Cours</span>
@@ -156,18 +141,18 @@ const InstructorDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard
           title="Mes Cours"
-          value={stats.totalCourses.toString()}
-          change={12}
+          value={loading ? "..." : stats.totalCourses.toString()}
+          change={stats.totalCourses > 0 && stats.publishedCourses > 0 ? Math.round((stats.publishedCourses / stats.totalCourses) * 100) : 0}
           trend="up"
           icon={<Book size={24} color="#1D4ED8" variant="Bold" />}
-          description="Cours créés"
+          description={`${stats.draftCourses || 0} brouillon${stats.draftCourses > 1 ? 's' : ''}`}
           color="#1D4ED8"
         />
 
         <MetricCard
           title="Cours Publiés"
-          value={stats.publishedCourses.toString()}
-          change={8}
+          value={loading ? "..." : stats.publishedCourses.toString()}
+          change={stats.totalCourses > 0 && stats.publishedCourses > 0 ? Math.round((stats.publishedCourses / stats.totalCourses) * 100) : 0}
           trend="up"
           icon={<Play size={24} color="#059669" variant="Bold" />}
           description="En ligne actuellement"
@@ -176,8 +161,8 @@ const InstructorDashboard = () => {
 
         <MetricCard
           title="Total Étudiants"
-          value={stats.totalStudents.toString()}
-          change={15}
+          value={loading ? "..." : (stats.totalStudents || 0).toString()}
+          change={stats.totalCourses > 0 && stats.totalStudents > 0 ? Math.round(stats.totalStudents / stats.totalCourses) : 0}
           trend="up"
           icon={<People size={24} color="#7C3AED" variant="Bold" />}
           description="Inscrits à mes cours"
@@ -186,11 +171,11 @@ const InstructorDashboard = () => {
 
         <MetricCard
           title="Note Moyenne"
-          value={stats.averageRating.toString()}
-          change={5}
+          value={loading ? "..." : stats.averageRating > 0 ? stats.averageRating.toFixed(1) : "0.0"}
+          change={stats.averageRating > 0 ? Math.round((stats.averageRating / 5) * 100) : 0}
           trend="up"
           icon={<TrendUp size={24} color="#DC2626" variant="Bold" />}
-          description="Évaluation globale"
+          description="Sur 5 étoiles"
           color="#DC2626"
         />
       </div>
@@ -262,7 +247,11 @@ const InstructorDashboard = () => {
               <p className="text-sm text-gray-500">Créer un nouveau cours</p>
             </div>
           </div>
-          <Button className="w-full" style={{ backgroundColor: "#1D4ED8" }}>
+          <Button
+            className="w-full"
+            style={{ backgroundColor: "#1D4ED8" }}
+            onClick={() => navigate("/dashboard/instructor/courses")}
+          >
             Créer un cours
           </Button>
         </div>
@@ -279,7 +268,11 @@ const InstructorDashboard = () => {
               <p className="text-sm text-gray-500">Voir tous mes étudiants</p>
             </div>
           </div>
-          <Button className="w-full" style={{ backgroundColor: "#059669" }}>
+          <Button
+            className="w-full"
+            style={{ backgroundColor: "#059669" }}
+            onClick={() => navigate("/dashboard/instructor/students")}
+          >
             Voir les étudiants
           </Button>
         </div>
@@ -294,7 +287,11 @@ const InstructorDashboard = () => {
               <p className="text-sm text-gray-500">Rapports et statistiques</p>
             </div>
           </div>
-          <Button className="w-full" style={{ backgroundColor: "#7C3AED" }}>
+          <Button
+            className="w-full"
+            style={{ backgroundColor: "#7C3AED" }}
+            onClick={() => navigate("/dashboard/instructor/analytics")}
+          >
             Voir les rapports
           </Button>
         </div>

@@ -73,6 +73,46 @@ export interface CreateReviewDto {
   comment: string;
 }
 
+export interface ProgressDetails {
+  progress: number;
+  completedLessons: number;
+  totalLessons: number;
+  currentLesson: {
+    _id: string;
+    title: string;
+    order: number;
+  } | null;
+  timeSpent: number;
+  certificate: {
+    isIssued: boolean;
+    issuedAt?: string;
+    certificateUrl?: string;
+    certificateId?: string;
+  };
+}
+
+export interface InstructorStudent {
+  _id: string;
+  studentId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  avatar?: string;
+  enrollments: Array<{
+    _id: string;
+    courseId: string;
+    courseTitle: string;
+    progress: number;
+    status: string;
+    enrolledAt: string;
+    lastAccessedAt: string;
+    completedAt?: string;
+  }>;
+  totalCourses: number;
+  averageProgress: number;
+  completedCourses: number;
+}
+
 export class EnrollmentService {
   // S'inscrire à un cours
   static async enrollInCourse(data: CreateEnrollmentDto): Promise<Enrollment> {
@@ -171,5 +211,35 @@ export class EnrollmentService {
   static async getCompletedCourses(): Promise<Enrollment[]> {
     const enrollments = await this.getMyEnrollments();
     return enrollments.filter(e => e.completedAt);
+  }
+
+  // Obtenir les détails de progression d'un cours
+  static async getProgressDetails(courseId: string): Promise<ProgressDetails> {
+    const response = await api.get(`/enrollments/course/${courseId}/progress-details`);
+    return response.data;
+  }
+
+  // Mettre à jour la leçon courante
+  static async updateCurrentLesson(courseId: string, lessonId: string): Promise<Enrollment> {
+    const response = await api.patch(`/enrollments/course/${courseId}/current-lesson/${lessonId}`);
+    return response.data;
+  }
+
+  // Marquer le cours comme complété et générer le certificat
+  static async completeCourse(courseId: string): Promise<Enrollment> {
+    const response = await api.post(`/enrollments/course/${courseId}/complete`);
+    return response.data;
+  }
+
+  // Annuler une inscription
+  static async cancelEnrollment(courseId: string): Promise<Enrollment> {
+    const response = await api.patch(`/enrollments/course/${courseId}/cancel`);
+    return response.data;
+  }
+
+  // Obtenir tous les étudiants de l'instructeur (pour instructeurs uniquement)
+  static async getInstructorStudents(): Promise<InstructorStudent[]> {
+    const response = await api.get('/enrollments/instructor/students');
+    return response.data;
   }
 }

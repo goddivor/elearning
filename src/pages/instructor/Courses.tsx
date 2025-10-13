@@ -157,7 +157,7 @@ const InstructorCourses = () => {
       ),
     },
     {
-      key: "enrolledStudents",
+      key: "enrolledCount",
       title: "Étudiants",
       render: (count) => (
         <span className="text-sm font-medium text-gray-900">{count || 0}</span>
@@ -429,42 +429,6 @@ const InstructorCourses = () => {
           ))}
         </div>
       )}
-
-      {/* Stats Summary */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Résumé</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-          <div>
-            <div className="text-2xl font-bold text-blue-600">
-              {courses.length}
-            </div>
-            <div className="text-sm text-gray-500">Total cours</div>
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-green-600">
-              {courses.filter((c) => c.isPublished).length}
-            </div>
-            <div className="text-sm text-gray-500">Publiés</div>
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-purple-600">
-              {courses.reduce((sum, c) => sum + (c.enrolledStudents || 0), 0)}
-            </div>
-            <div className="text-sm text-gray-500">Étudiants</div>
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-yellow-600">
-              {courses.length > 0
-                ? (
-                    courses.reduce((sum, c) => sum + c.averageRating, 0) /
-                    courses.length
-                  ).toFixed(1)
-                : "0.0"}
-            </div>
-            <div className="text-sm text-gray-500">Note moyenne</div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
