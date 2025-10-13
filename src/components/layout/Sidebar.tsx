@@ -1,19 +1,21 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Category,
   Book1,
   People,
   Chart,
-  User,
   BookSaved,
   Medal,
   Video,
   Profile2User,
   Buildings,
-  Crown} from 'iconsax-react';
+  Crown,
+  LogoutCurve
+} from 'iconsax-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { avatarService } from '@/services/avatarService';
 
 interface SidebarItem {
   title: string;
@@ -26,8 +28,11 @@ interface SidebarItem {
   badge?: number;
 }
 
+interface SidebarProps {
+  isCollapsed?: boolean;
+}
 
-function SidebarNavItem({ item }: { item: SidebarItem }) {
+function SidebarNavItem({ item, isCollapsed }: { item: SidebarItem; isCollapsed: boolean }) {
   const { pathname } = useLocation();
 
   // Improved active state logic
@@ -61,23 +66,23 @@ function SidebarNavItem({ item }: { item: SidebarItem }) {
       to={item.href}
       className={cn(
         "flex items-center transition-colors rounded-lg relative group",
-        "lg:justify-between lg:px-4 lg:py-3 justify-center px-3 py-3 mx-2",
+        isCollapsed ? "justify-center px-3 py-3 mx-2" : "px-4 py-3 mx-2",
         isActive
-          ? "bg-blue-50 text-blue-700 border-r-2 border-blue-700"
-          : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+          ? "bg-[#0a3d5c] text-white"
+          : "text-gray-300 hover:bg-[#0a3d5c] hover:text-white"
       )}
     >
-      <div className="lg:flex lg:items-center lg:space-x-3 flex items-center justify-center">
+      <div className={cn("flex items-center", !isCollapsed && "space-x-3")}>
         <Icon
           size={20}
-          color={isActive ? "#1D4ED8" : "#6B7280"}
+          color={isActive ? "#FFFFFF" : "#D1D5DB"}
           variant={isActive ? "Bold" : "Outline"}
         />
-        <span className="text-sm font-medium hidden lg:block">{item.title}</span>
+        {!isCollapsed && <span className="text-sm font-medium">{item.title}</span>}
       </div>
 
-      {item.badge && (
-        <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-600 rounded-full hidden lg:inline">
+      {item.badge && !isCollapsed && (
+        <span className="ml-auto px-2 py-0.5 text-xs font-medium bg-red-500 text-white rounded-full">
           {item.badge}
         </span>
       )}
@@ -85,10 +90,31 @@ function SidebarNavItem({ item }: { item: SidebarItem }) {
   );
 }
 
-const Sidebar = () => {
-  const { user } = useAuth();
+const Sidebar = ({ isCollapsed = false }: SidebarProps) => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [avatarKey, setAvatarKey] = useState(Date.now());
 
   const userRole = user?.role || 'student';
+
+  // Force avatar refresh when user changes
+  useEffect(() => {
+    setAvatarKey(Date.now());
+  }, [user]);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/signin');
+  };
+
+  const getProfileRoute = () => {
+    switch (user?.role) {
+      case 'admin': return '/dashboard/admin/profile';
+      case 'instructor': return '/dashboard/instructor/profile';
+      case 'student': return '/dashboard/student/profile';
+      default: return '/dashboard/profile';
+    }
+  };
 
   const getMenuItems = (): SidebarItem[] => {
     switch (userRole) {
@@ -123,14 +149,9 @@ const Sidebar = () => {
             title: 'Statistiques',
             icon: Chart,
             href: '/dashboard/admin/stats'
-          },
-          {
-            title: 'Mon Profil',
-            icon: User,
-            href: '/dashboard/admin/profile'
           }
         ];
-      
+
       case 'instructor':
         return [
           {
@@ -157,14 +178,9 @@ const Sidebar = () => {
             title: 'Bibliothèque',
             icon: Video,
             href: '/dashboard/instructor/library'
-          },
-          {
-            title: 'Mon Profil',
-            icon: User,
-            href: '/dashboard/instructor/profile'
           }
         ];
-      
+
       case 'student':
       default:
         return [
@@ -197,11 +213,6 @@ const Sidebar = () => {
             title: 'Certificats',
             icon: Medal,
             href: '/student/certificates'
-          },
-          {
-            title: 'Mon Profil',
-            icon: User,
-            href: '/dashboard/student/profile'
           }
         ];
     }
@@ -210,16 +221,84 @@ const Sidebar = () => {
   const menuItems = getMenuItems();
 
   return (
-    <aside className="fixed left-0 top-16 h-[calc(100vh-4rem)] bg-white border-r border-gray-200 overflow-y-auto transition-all duration-300 lg:w-64 w-16">
-      <div className="lg:p-4 p-2">
-        {/* Navigation Menu */}
-        <nav className="lg:space-y-1 space-y-2">
+    <aside
+      className={cn(
+        "fixed left-0 top-0 h-screen bg-[#041e31] border-r border-[#0a3d5c] overflow-y-auto transition-all duration-300 flex flex-col",
+        isCollapsed ? "w-20" : "w-64"
+      )}
+    >
+      {/* Header avec nom du site */}
+      <div className="p-6 border-b border-[#0a3d5c]">
+        {!isCollapsed && (
+          <h1 className="text-2xl font-bold text-white">3DELearning</h1>
+        )}
+        {isCollapsed && (
+          <div className="flex justify-center">
+            <span className="text-white font-bold text-xl">3D</span>
+          </div>
+        )}
+      </div>
+
+      {/* Profile Avatar Section */}
+      <div className="p-4 border-b border-[#0a3d5c]">
+        <Link
+          to={getProfileRoute()}
+          className="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#0a3d5c] transition-colors"
+        >
+          <div className="flex-shrink-0">
+            {user?.avatar ? (
+              <img
+                key={avatarKey}
+                src={`${avatarService.getAvatarUrl(user.avatar)}?v=${avatarKey}`}
+                alt={`${user.firstName} ${user.lastName}`}
+                className="w-10 h-10 rounded-full object-cover border-2 border-blue-500"
+              />
+            ) : (
+              <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center border-2 border-blue-500">
+                <span className="text-white text-sm font-medium">
+                  {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+                </span>
+              </div>
+            )}
+          </div>
+          {!isCollapsed && (
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-white truncate">
+                {user?.firstName} {user?.lastName}
+              </p>
+              <p className="text-xs text-gray-400 truncate">
+                {user?.role === 'admin' && 'Administrateur'}
+                {user?.role === 'instructor' && 'Instructeur'}
+                {user?.role === 'student' && 'Étudiant'}
+              </p>
+            </div>
+          )}
+        </Link>
+      </div>
+
+      {/* Navigation Menu */}
+      <div className="flex-1 overflow-y-auto py-4">
+        <nav className="space-y-1">
           {menuItems.map((item) => (
-            <SidebarNavItem key={item.href} item={item} />
+            <SidebarNavItem key={item.href} item={item} isCollapsed={isCollapsed} />
           ))}
         </nav>
       </div>
 
+      {/* Logout Button at Bottom */}
+      <div className="p-4 border-t border-[#0a3d5c]">
+        <button
+          onClick={handleLogout}
+          className={cn(
+            "flex items-center w-full transition-colors rounded-lg p-3",
+            "text-gray-300 hover:bg-red-900/20 hover:text-red-400",
+            isCollapsed ? "justify-center" : "space-x-3"
+          )}
+        >
+          <LogoutCurve size={20} color="currentColor" />
+          {!isCollapsed && <span className="text-sm font-medium">Se déconnecter</span>}
+        </button>
+      </div>
     </aside>
   );
 };
