@@ -31,6 +31,15 @@ const Header = () => {
     }
   };
 
+  const getProfileRoute = () => {
+    switch (user?.role) {
+      case 'admin': return '/dashboard/admin/profile';
+      case 'instructor': return '/dashboard/instructor/profile';
+      case 'student': return '/dashboard/student/profile';
+      default: return '/dashboard/profile';
+    }
+  };
+
   return (
     <header className="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-200 z-50">
       <div className="flex items-center justify-between h-16 px-6">
@@ -98,7 +107,7 @@ const Header = () => {
             }`}>
               <div className="py-2">
                 <Link
-                  to="/dashboard/profile"
+                  to={getProfileRoute()}
                   onClick={() => setDropdownOpen(false)}
                   className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                 >

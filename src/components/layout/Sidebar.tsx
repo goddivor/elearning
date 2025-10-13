@@ -5,13 +5,13 @@ import {
   Book1,
   People,
   Chart,
-  Setting2,
   User,
   BookSaved,
   Medal,
   Video,
   Profile2User,
-  Buildings} from 'iconsax-react';
+  Buildings,
+  Crown} from 'iconsax-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -35,7 +35,7 @@ function SidebarNavItem({ item }: { item: SidebarItem }) {
     // Exact match for root dashboard routes
     if (item.href === '/dashboard/admin' ||
         item.href === '/dashboard/instructor' ||
-        item.href === '/student/dashboard') {
+        item.href === '/dashboard/student') {
       return pathname === item.href;
     }
 
@@ -125,9 +125,9 @@ const Sidebar = () => {
             href: '/dashboard/admin/stats'
           },
           {
-            title: 'Paramètres Système',
-            icon: Setting2,
-            href: '/dashboard/admin/settings'
+            title: 'Mon Profil',
+            icon: User,
+            href: '/dashboard/admin/profile'
           }
         ];
       
@@ -159,9 +159,9 @@ const Sidebar = () => {
             href: '/dashboard/instructor/library'
           },
           {
-            title: 'Paramètres',
-            icon: Setting2,
-            href: '/dashboard/instructor/settings'
+            title: 'Mon Profil',
+            icon: User,
+            href: '/dashboard/instructor/profile'
           }
         ];
       
@@ -174,19 +174,24 @@ const Sidebar = () => {
             href: '/dashboard/student'
           },
           {
+            title: 'Catalogue',
+            icon: Book1,
+            href: '/dashboard/student/catalog'
+          },
+          {
             title: 'Mes Cours',
             icon: BookSaved,
             href: '/dashboard/student/courses'
           },
           {
-            title: 'Parcourir',
-            icon: Book1,
-            href: '/student/browse'
-          },
-          {
             title: 'Progression',
             icon: Chart,
             href: '/dashboard/student/progress'
+          },
+          {
+            title: 'Classement',
+            icon: Crown,
+            href: '/dashboard/student/leaderboard'
           },
           {
             title: 'Certificats',
@@ -196,7 +201,7 @@ const Sidebar = () => {
           {
             title: 'Mon Profil',
             icon: User,
-            href: '/student/profile'
+            href: '/dashboard/student/profile'
           }
         ];
     }

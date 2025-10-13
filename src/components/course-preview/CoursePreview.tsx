@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import { 
-  ArrowLeft, 
-  Play, 
-  Book, 
-  Clock, 
+import { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import {
+  ArrowLeft,
+  Play,
+  Book,
+  Clock,
   Star,
   Award,
   DocumentText,
@@ -12,83 +13,72 @@ import {
 } from 'iconsax-react';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
-import type { LocalImage } from '@/components/ui/ImageUpload';
+import { courseService, type Course } from '@/services/courseService';
+import { moduleService, type Module as ModuleType } from '@/services/moduleService';
+import { lessonService, type Lesson as LessonType } from '@/services/lessonService';
+import { useToast } from '@/contexts/toast-context';
 
-// Interfaces reprises du CourseBuilder
-interface Module {
-  id: string;
-  title: string;
-  description: string;
-  order: number;
-  lessons: Lesson[];
-  duration: number;
-  isActive: boolean;
+// Interface pour les modules avec les lessons chargées
+interface ModuleWithLessons extends ModuleType {
+  lessons: LessonType[];
 }
 
-interface Lesson {
-  id: string;
-  title: string;
-  description: string;
-  order: number;
-  duration: number;
-  type: 'video' | 'text' | 'quiz' | 'assignment' | '3d' | 'document';
-  content: {
-    type?: string;
-    videoUrl?: string;
-    thumbnailUrl?: string;
-    textContent?: string;
-    documentUrl?: string;
-    documentName?: string;
-    documentType?: string;
-    model3dUrl?: string;
-    quizData?: {
-      questions: Array<{
-        id: string;
-        type: string;
-        question: string;
-        options: string[];
-        correctAnswer: number | number[] | string | string[];
-        explanation: string;
-      }>;
-    };
-    assignmentData?: {
-      description?: string;
-      dueDate?: string;
-      maxPoints?: number;
-    };
-  };
-  resources: string[];
-  isFree: boolean;
-  isActive: boolean;
-}
+const CoursePreview = () => {
+  const { courseId } = useParams<{ courseId: string }>();
+  const navigate = useNavigate();
+  const { error: showError } = useToast();
 
-interface Course {
-  id: string;
-  title: string;
-  description: string;
-  thumbnailUrl?: string;
-  localThumbnail?: LocalImage | null;
-  category: string;
-  level: 'beginner' | 'intermediate' | 'advanced';
-  price: number;
-  isPublished: boolean;
-  enrolledStudents: number;
-  averageRating: number;
-}
-
-interface CoursePreviewProps {
-  course: Partial<Course>;
-  modules: Module[];
-  onClose: () => void;
-}
-
-const CoursePreview = ({ course, modules, onClose }: CoursePreviewProps) => {
+  const [course, setCourse] = useState<Course | null>(null);
+  const [modules, setModules] = useState<ModuleWithLessons[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
 
+  const onClose = () => {
+    navigate('/dashboard/instructor/courses');
+  };
+
+  const loadCourseData = useCallback(async () => {
+    if (!courseId) return;
+
+    try {
+      setLoading(true);
+      const [courseData, modulesData] = await Promise.all([
+        courseService.getCourseById(courseId),
+        moduleService.getModulesByCourse(courseId),
+      ]);
+
+      // Charger les lessons pour chaque module
+      const modulesWithLessons: ModuleWithLessons[] = await Promise.all(
+        modulesData.map(async (module) => {
+          const lessons = await lessonService.getLessonsByModule(module.id);
+          return {
+            ...module,
+            lessons: lessons || []
+          };
+        })
+      );
+
+      setCourse(courseData);
+      setModules(modulesWithLessons);
+    } catch (err) {
+      console.error('Error loading course preview:', err);
+      showError('Erreur', 'Impossible de charger la prévisualisation du cours');
+      navigate('/dashboard/instructor/courses');
+    } finally {
+      setLoading(false);
+    }
+  }, [courseId, navigate, showError]);
+
+  useEffect(() => {
+    if (courseId) {
+      loadCourseData();
+    }
+  }, [courseId, loadCourseData]);
+
   // Calcul des statistiques du cours
-  const totalLessons = modules.reduce((sum, module) => sum + module.lessons.length, 0);
-  const totalDuration = modules.reduce((sum, module) => sum + module.duration, 0);
+  const totalLessons = modules?.reduce((sum, module) => sum + (module.lessons?.length || 0), 0) || 0;
+  const totalDuration = modules?.reduce((sum, module) => sum + (module.duration || 0), 0) || 0;
 
   const formatDuration = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
@@ -127,8 +117,8 @@ const CoursePreview = ({ course, modules, onClose }: CoursePreviewProps) => {
   const selectedModule = modules.find(m => m.id === selectedModuleId);
   const selectedLesson = selectedModule?.lessons.find(l => l.id === selectedLessonId);
 
-  const renderLessonContent = (lesson: Lesson) => {
-    switch (lesson.type) {
+  const renderLessonContent = (lesson: LessonType) => {
+    switch (lesson.content.type) {
       case 'video':
         return (
           <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -306,15 +296,44 @@ const CoursePreview = ({ course, modules, onClose }: CoursePreviewProps) => {
         return (
           <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
             <div className="text-center">
-              {getLessonIcon(lesson.type)}
+              {getLessonIcon(lesson.content.type)}
               <p className="text-gray-500 mt-2">
-                Contenu de la leçon : {lesson.type}
+                Contenu de la leçon : {lesson.content.type}
               </p>
             </div>
           </div>
         );
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Chargement de la prévisualisation...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!course) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Book size={48} color="#9CA3AF" className="mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Cours introuvable</h2>
+          <p className="text-gray-600 mb-4">Le cours que vous recherchez n'existe pas.</p>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Retour aux cours
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -331,7 +350,7 @@ const CoursePreview = ({ course, modules, onClose }: CoursePreviewProps) => {
             </Button>
             <div>
               <h1 className="text-xl font-semibold text-gray-900">
-                Prévisualisation : {course.title}
+                Prévisualisation : {course?.title || 'Cours'}
               </h1>
               <p className="text-sm text-orange-600">
                 Mode prévisualisation - Vue étudiant
@@ -352,7 +371,7 @@ const CoursePreview = ({ course, modules, onClose }: CoursePreviewProps) => {
                   {/* Header de la leçon */}
                   <div className="p-6 border-b border-gray-100">
                     <div className="flex items-center space-x-3 mb-2">
-                      {getLessonIcon(selectedLesson.type)}
+                      {getLessonIcon(selectedLesson.content.type)}
                       <h2 className="text-xl font-semibold text-gray-900">
                         {selectedLesson.title}
                       </h2>
@@ -379,10 +398,10 @@ const CoursePreview = ({ course, modules, onClose }: CoursePreviewProps) => {
                 </div>
               ) : (
                 <div className="aspect-video bg-gray-100 rounded-xl overflow-hidden">
-                  {course.thumbnailUrl || course.localThumbnail ? (
-                    <img 
-                      src={course.thumbnailUrl || (course.localThumbnail?.preview)} 
-                      alt={course.title}
+                  {course?.thumbnailUrl || course?.localThumbnail ? (
+                    <img
+                      src={course?.thumbnailUrl || (course?.localThumbnail?.preview)}
+                      alt={course?.title || 'Cours'}
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -400,11 +419,11 @@ const CoursePreview = ({ course, modules, onClose }: CoursePreviewProps) => {
             {/* Informations du cours */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">À propos de ce cours</h3>
-              <p className="text-gray-600 mb-4">{course.description}</p>
+              <p className="text-gray-600 mb-4">{course?.description || 'Aucune description disponible'}</p>
               
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center p-3 bg-blue-50 rounded-lg">
-                  <div className="text-lg font-bold text-blue-600">{modules.length}</div>
+                  <div className="text-lg font-bold text-blue-600">{modules?.length || 0}</div>
                   <div className="text-sm text-gray-600">Modules</div>
                 </div>
                 <div className="text-center p-3 bg-green-50 rounded-lg">
@@ -416,7 +435,7 @@ const CoursePreview = ({ course, modules, onClose }: CoursePreviewProps) => {
                   <div className="text-sm text-gray-600">Durée</div>
                 </div>
                 <div className="text-center p-3 bg-orange-50 rounded-lg">
-                  <div className="text-lg font-bold text-orange-600">{getLevelLabel(course.level)}</div>
+                  <div className="text-lg font-bold text-orange-600">{getLevelLabel(course?.level)}</div>
                   <div className="text-sm text-gray-600">Niveau</div>
                 </div>
               </div>
@@ -429,10 +448,10 @@ const CoursePreview = ({ course, modules, onClose }: CoursePreviewProps) => {
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
               <div className="flex items-center space-x-3 mb-4">
                 <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                  {course.thumbnailUrl ? (
-                    <img 
-                      src={course.thumbnailUrl} 
-                      alt={course.title}
+                  {course?.thumbnailUrl ? (
+                    <img
+                      src={course.thumbnailUrl}
+                      alt={course?.title || 'Cours'}
                       className="w-full h-full object-cover rounded-xl"
                     />
                   ) : (
@@ -440,29 +459,29 @@ const CoursePreview = ({ course, modules, onClose }: CoursePreviewProps) => {
                   )}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">{course.title}</h3>
-                  <p className="text-sm text-gray-500 capitalize">{course.category}</p>
+                  <h3 className="font-semibold text-gray-900">{course?.title || 'Cours'}</h3>
+                  <p className="text-sm text-gray-500 capitalize">{course?.category || 'Non catégorisé'}</p>
                 </div>
               </div>
-              
+
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-500">Prix :</span>
                   <span className="font-medium">
-                    {course.price === 0 ? 'Gratuit' : `${course.price}€`}
+                    {course?.price === 0 ? 'Gratuit' : `${course?.price || 0}€`}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Étudiants :</span>
-                  <span className="font-medium">{course.enrolledStudents || 0}</span>
+                  <span className="font-medium">{course?.enrolledStudents || 0}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Note :</span>
                   <div className="flex items-center">
                     <span className="font-medium mr-1">
-                      {course.averageRating ? course.averageRating.toFixed(1) : 'N/A'}
+                      {course?.averageRating ? course.averageRating.toFixed(1) : 'N/A'}
                     </span>
-                    {course.averageRating && <Star size={14} className="text-yellow-400" />}
+                    {course?.averageRating && <Star size={14} className="text-yellow-400" />}
                   </div>
                 </div>
               </div>
@@ -475,28 +494,29 @@ const CoursePreview = ({ course, modules, onClose }: CoursePreviewProps) => {
             {/* Structure du cours */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <h3 className="font-semibold text-gray-900 mb-4">Contenu du cours</h3>
-              
+
               <div className="space-y-2">
-                {modules.map((module) => (
-                  <div key={module.id} className="border border-gray-200 rounded-lg">
-                    <button
-                      onClick={() => setSelectedModuleId(
-                        selectedModuleId === module.id ? null : module.id
-                      )}
-                      className="w-full p-3 text-left hover:bg-gray-50 rounded-lg"
-                    >
-                      <div className="flex justify-between items-center">
-                        <h4 className="font-medium text-gray-900">{module.title}</h4>
-                        <span className="text-xs text-gray-500">
-                          {module.lessons.length} leçon{module.lessons.length > 1 ? 's' : ''}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-500 mt-1">{formatDuration(module.duration)}</p>
-                    </button>
-                    
-                    {selectedModuleId === module.id && (
-                      <div className="border-t border-gray-200 bg-gray-50">
-                        {module.lessons.map((lesson) => (
+                {modules && modules.length > 0 ? (
+                  modules.map((module) => (
+                    <div key={module.id} className="border border-gray-200 rounded-lg">
+                      <button
+                        onClick={() => setSelectedModuleId(
+                          selectedModuleId === module.id ? null : module.id
+                        )}
+                        className="w-full p-3 text-left hover:bg-gray-50 rounded-lg"
+                      >
+                        <div className="flex justify-between items-center">
+                          <h4 className="font-medium text-gray-900">{module.title}</h4>
+                          <span className="text-xs text-gray-500">
+                            {module.lessons?.length || 0} leçon{(module.lessons?.length || 0) > 1 ? 's' : ''}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-500 mt-1">{formatDuration(module.duration)}</p>
+                      </button>
+
+                      {selectedModuleId === module.id && module.lessons && module.lessons.length > 0 && (
+                        <div className="border-t border-gray-200 bg-gray-50">
+                          {module.lessons.map((lesson) => (
                           <button
                             key={lesson.id}
                             onClick={() => setSelectedLessonId(lesson.id)}
@@ -504,7 +524,7 @@ const CoursePreview = ({ course, modules, onClose }: CoursePreviewProps) => {
                               selectedLessonId === lesson.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''
                             }`}
                           >
-                            {getLessonIcon(lesson.type)}
+                            {getLessonIcon(lesson.content.type)}
                             <div className="flex-1">
                               <div className="text-sm font-medium text-gray-900">
                                 {lesson.title}
@@ -521,7 +541,12 @@ const CoursePreview = ({ course, modules, onClose }: CoursePreviewProps) => {
                       </div>
                     )}
                   </div>
-                ))}
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>Aucun module disponible pour ce cours.</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

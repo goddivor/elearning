@@ -1,17 +1,18 @@
-import { Play, Calendar, User, Book1 } from "iconsax-react";
-import Button from "@/components/ui/Button";
+import { Play, Calendar, User, Book1, Eye, UserRemove } from "iconsax-react";
 import type { Enrollment } from "@/services/enrollmentService";
 
 interface EnrolledCourseCardProps {
   enrollment: Enrollment;
   onContinue?: (courseId: string) => void;
   onViewDetails?: (courseId: string) => void;
+  onUnenroll?: (courseId: string) => void;
 }
 
 export const EnrolledCourseCard = ({
   enrollment,
   onContinue,
-  onViewDetails
+  onViewDetails,
+  onUnenroll
 }: EnrolledCourseCardProps) => {
   const { course, progress, enrolledAt, completedAt } = enrollment;
 
@@ -67,12 +68,14 @@ export const EnrolledCourseCard = ({
 
         {/* Informations du cours */}
         <div className="space-y-2 mb-4">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <User size={16} color="#6B7280" />
-            <span>
-              {course.instructor.firstName} {course.instructor.lastName}
-            </span>
-          </div>
+          {course.instructor && (
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <User size={16} color="#6B7280" />
+              <span>
+                {course.instructor.firstName} {course.instructor.lastName}
+              </span>
+            </div>
+          )}
 
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <Calendar size={16} color="#6B7280" />
@@ -114,25 +117,36 @@ export const EnrolledCourseCard = ({
         )}
 
         {/* Actions */}
-        <div className="flex gap-3">
-          <Button
-            variant="default"
-            size="sm"
+        <div className="flex gap-2">
+          {/* Continuer/Revoir */}
+          <button
             onClick={() => onContinue?.(course._id)}
-            className="flex-1 flex items-center justify-center gap-2"
+            className="flex-1 flex items-center justify-center gap-2 p-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+            title={isCompleted ? 'Revoir le cours' : 'Continuer le cours'}
           >
-            <Play size={16} color="#FFFFFF" />
-            {isCompleted ? 'Revoir' : 'Continuer'}
-          </Button>
+            <Play size={18} color="#FFFFFF" variant="Bold" />
+            <span className="text-white text-sm font-medium">
+              {isCompleted ? 'Revoir' : 'Continuer'}
+            </span>
+          </button>
 
-          <Button
-            variant="outline"
-            size="sm"
+          {/* Voir détails */}
+          <button
             onClick={() => onViewDetails?.(course._id)}
-            className="px-4"
+            className="p-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            title="Voir les détails"
           >
-            Détails
-          </Button>
+            <Eye size={20} color="#374151" variant="Bold" />
+          </button>
+
+          {/* Se désinscrire */}
+          <button
+            onClick={() => onUnenroll?.(course._id)}
+            className="p-2.5 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+            title="Se désinscrire du cours"
+          >
+            <UserRemove size={20} color="#FFFFFF" variant="Bold" />
+          </button>
         </div>
       </div>
     </div>
