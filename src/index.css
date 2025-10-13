@@ -4,9 +4,6 @@
   font-family: "SpaceGrotesk";
   src: local("SpaceGrotesk"), url("./assets/fonts/SpaceGrotesk.ttf");
 }
-html {
-  zoom: 90%;
-}
 
 html, body {
   margin: 0;
