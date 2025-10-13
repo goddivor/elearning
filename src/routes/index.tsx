@@ -3,9 +3,7 @@ import LandingPage from "../pages/landing";
 import RootLayout from "../app.layout";
 import DashboardLayout from "../layouts/DashboardLayout";
 import RoleBasedRedirect from "../components/RoleBasedRedirect";
-import ProtectedRoute from "../components/ProtectedRoute";
 import NotFound from "../pages/NotFound";
-import Profile from "../pages/Profile";
 
 import { authRoutes } from "./auth.routes";
 import { adminRoutes } from "./admin.routes";
@@ -40,16 +38,6 @@ const router = createBrowserRouter([
 
       // Routes student
       ...studentRoutes,
-
-      // Route profile accessible à tous les utilisateurs authentifiés
-      {
-        path: "profile",
-        element: (
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        )
-      },
     ],
   },
 ]);

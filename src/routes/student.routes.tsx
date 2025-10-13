@@ -3,6 +3,9 @@ import ProtectedRoute from "../components/ProtectedRoute";
 import StudentDashboard from "../pages/student/Dashboard";
 import MyCourses from "../pages/student/MyCourses";
 import Progress from "../pages/student/Progress";
+import Catalog from "../pages/student/Catalog";
+import Leaderboard from "../pages/student/Leaderboard";
+import StudentProfile from "../pages/student/StudentProfile";
 
 export const studentRoutes: RouteObject[] = [
   {
@@ -10,6 +13,14 @@ export const studentRoutes: RouteObject[] = [
     element: (
       <ProtectedRoute requiredRole="student">
         <StudentDashboard />
+      </ProtectedRoute>
+    )
+  },
+  {
+    path: "student/catalog",
+    element: (
+      <ProtectedRoute requiredRole="student">
+        <Catalog />
       </ProtectedRoute>
     )
   },
@@ -26,6 +37,22 @@ export const studentRoutes: RouteObject[] = [
     element: (
       <ProtectedRoute requiredRole="student">
         <Progress />
+      </ProtectedRoute>
+    )
+  },
+  {
+    path: "student/leaderboard",
+    element: (
+      <ProtectedRoute requiredRole="student">
+        <Leaderboard />
+      </ProtectedRoute>
+    )
+  },
+  {
+    path: "student/profile",
+    element: (
+      <ProtectedRoute requiredRole="student">
+        <StudentProfile />
       </ProtectedRoute>
     )
   },
