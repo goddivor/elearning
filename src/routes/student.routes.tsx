@@ -5,7 +5,7 @@ import MyCourses from "../pages/student/MyCourses";
 import Progress from "../pages/student/Progress";
 import Catalog from "../pages/student/Catalog";
 import Leaderboard from "../pages/student/Leaderboard";
-import StudentProfile from "../pages/student/StudentProfile";
+import StudentProfile from "../pages/student/StudentProfileUpdated";
 
 export const studentRoutes: RouteObject[] = [
   {

@@ -8,6 +8,10 @@ export interface User {
   isActive: boolean;
   avatar?: string;
   bannerImage?: string;
+  aboutMe?: string;
+  socialLinks?: string[];
+  location?: string;
+  tags?: string[];
   createdAt: string;
   updatedAt: string;
 }

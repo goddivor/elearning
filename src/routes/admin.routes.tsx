@@ -5,7 +5,7 @@ import AdminUsers from "../pages/admin/Users";
 import AdminCourses from "../pages/admin/Courses";
 import AdminProfiles from "../pages/admin/Profiles";
 import AdminOrganizations from "../pages/admin/Organizations";
-import AdminProfile from "../pages/admin/AdminProfile";
+import AdminProfile from "../pages/admin/AdminProfileNew";
 
 export const adminRoutes: RouteObject[] = [
   {
