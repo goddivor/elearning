@@ -28,9 +28,6 @@ export const Header = () => {
             <Link to="/become-instructor" className="text-gray-700 hover:text-purple-600 transition-colors">
               Enseigner
             </Link>
-            <Link to="/business" className="text-gray-700 hover:text-purple-600 transition-colors">
-              Business
-            </Link>
           </nav>
 
           {/* Search Bar (Desktop) */}
@@ -115,13 +112,6 @@ export const Header = () => {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Enseigner
-              </Link>
-              <Link
-                to="/business"
-                className="text-gray-700 hover:text-purple-600 transition-colors py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Business
               </Link>
               <div className="pt-4 border-t border-gray-100 space-y-3">
                 <Link

@@ -1,6 +1,8 @@
 export { Header } from './Header';
 export { Hero } from './Hero';
 export { FeaturedCourses } from './FeaturedCourses';
+export { OrganizationsFeature } from './OrganizationsFeature';
+export { AIFeatures } from './AIFeatures';
 export { Partners } from './Partners';
 export { Testimonials } from './Testimonials';
 export { Pricing } from './Pricing';

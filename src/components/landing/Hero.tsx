@@ -23,8 +23,8 @@ export const Hero = () => {
             </h1>
 
             <p className="text-xl text-gray-600 leading-relaxed">
-              Découvrez une nouvelle dimension de l'apprentissage en ligne avec nos cours 3D interactifs.
-              Plus de 50,000 étudiants ont déjà transformé leur carrière.
+              La plateforme complète pour la gestion d'organisations éducatives, l'apprentissage intelligent avec IA,
+              et des cours immersifs en 3D. Plus de 50,000 étudiants ont déjà transformé leur carrière.
             </p>
 
             {/* Stats */}
@@ -69,10 +69,12 @@ export const Hero = () => {
             {/* Trust Badge */}
             <div className="flex items-center space-x-4 pt-4">
               <div className="flex -space-x-2">
-                {[1, 2, 3, 4].map((i) => (
-                  <div
+                {['alice', 'bob', 'charlie', 'david'].map((name, i) => (
+                  <img
                     key={i}
-                    className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-indigo-400 border-2 border-white"
+                    src={`https://i.pravatar.cc/150?u=${name}`}
+                    alt={`Student ${i + 1}`}
+                    className="w-10 h-10 rounded-full border-2 border-white object-cover"
                   />
                 ))}
               </div>

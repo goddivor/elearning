@@ -1,6 +1,8 @@
 import { Header } from '../../components/landing/Header';
 import { Hero } from '../../components/landing/Hero';
 import { FeaturedCourses } from '../../components/landing/FeaturedCourses';
+import { OrganizationsFeature } from '../../components/landing/OrganizationsFeature';
+import { AIFeatures } from '../../components/landing/AIFeatures';
 import { Partners } from '../../components/landing/Partners';
 import { Testimonials } from '../../components/landing/Testimonials';
 import { Pricing } from '../../components/landing/Pricing';
@@ -12,6 +14,8 @@ export const NewLandingPage = () => {
       <Header />
       <Hero />
       <FeaturedCourses />
+      <OrganizationsFeature />
+      <AIFeatures />
       <Partners />
       <Testimonials />
       <Pricing />
