@@ -1,9 +1,57 @@
 import { Link } from 'react-router-dom';
 import { Play, TrendUp, Users, BookOpen } from '@phosphor-icons/react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { SlideInLeft, SlideInRight, FadeIn } from './AnimatedSection';
+import { useState, useEffect } from 'react';
+
+const courses = [
+  {
+    title: 'Cours Introduction 3D',
+    instructor: 'Marie Dubois',
+    modules: 12,
+    hours: 45,
+    rating: 4.8,
+    thumbnail: 'https://picsum.photos/seed/hero1/400/300',
+  },
+  {
+    title: 'Animation Avancée',
+    instructor: 'Jean Martin',
+    modules: 15,
+    hours: 52,
+    rating: 4.9,
+    thumbnail: 'https://picsum.photos/seed/hero2/400/300',
+  },
+  {
+    title: 'Modélisation 3D Pro',
+    instructor: 'Sophie Leroux',
+    modules: 18,
+    hours: 60,
+    rating: 4.7,
+    thumbnail: 'https://picsum.photos/seed/hero3/400/300',
+  },
+  {
+    title: 'Rendu Photoréaliste',
+    instructor: 'Marc Dubois',
+    modules: 10,
+    hours: 38,
+    rating: 4.9,
+    thumbnail: 'https://picsum.photos/seed/hero4/400/300',
+  },
+];
 
 export const Hero = () => {
+  const [currentCourseIndex, setCurrentCourseIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentCourseIndex((prev) => (prev + 1) % courses.length);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const currentCourse = courses[currentCourseIndex];
+
   return (
     <section className="relative bg-gradient-to-br from-purple-50 via-white to-indigo-50 pt-24 pb-16 md:pt-32 md:pb-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -103,31 +151,67 @@ export const Hero = () => {
             <div className="relative z-10">
               {/* Main Card */}
               <div className="bg-white rounded-2xl shadow-2xl p-8 transform rotate-2">
-                <div className="bg-gradient-to-br from-purple-100 to-indigo-100 rounded-xl p-6 mb-6">
-                  <div className="w-full h-64 bg-gradient-to-br from-purple-400 to-indigo-500 rounded-lg flex items-center justify-center">
-                    <Play size={64} weight="fill" className="text-white" />
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-indigo-400" />
-                      <div>
-                        <div className="font-semibold text-gray-900">Cours Introduction 3D</div>
-                        <div className="text-sm text-gray-500">Par Marie Dubois</div>
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentCourseIndex}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <div className="bg-gradient-to-br from-purple-100 to-indigo-100 rounded-xl p-6 mb-6">
+                      <div className="relative w-full h-64 rounded-lg overflow-hidden group">
+                        <img
+                          src={currentCourse.thumbnail}
+                          alt={currentCourse.title}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Play size={64} weight="fill" className="text-white" />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex items-center justify-between text-sm text-gray-600">
-                    <span>12 modules • 45 heures</span>
-                    <div className="flex items-center space-x-1">
-                      <svg className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
-                        <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                      </svg>
-                      <span className="font-semibold">4.8</span>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <img
+                            src={`https://i.pravatar.cc/150?u=${currentCourse.instructor}`}
+                            alt={currentCourse.instructor}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                          <div>
+                            <div className="font-semibold text-gray-900">{currentCourse.title}</div>
+                            <div className="text-sm text-gray-500">Par {currentCourse.instructor}</div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between text-sm text-gray-600">
+                        <span>{currentCourse.modules} modules • {currentCourse.hours} heures</span>
+                        <div className="flex items-center space-x-1">
+                          <svg className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                            <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                          </svg>
+                          <span className="font-semibold">{currentCourse.rating}</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
+
+                    {/* Course indicator dots */}
+                    <div className="flex items-center justify-center space-x-2 mt-6">
+                      {courses.map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentCourseIndex(index)}
+                          className={`h-2 rounded-full transition-all ${
+                            index === currentCourseIndex
+                              ? 'w-8 bg-purple-600'
+                              : 'w-2 bg-gray-300 hover:bg-gray-400'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
               </div>
 
               {/* Floating Stats Cards */}
