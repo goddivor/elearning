@@ -21,10 +21,10 @@ export const Footer = () => {
               <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-xl">3D</span>
               </div>
-              <span className="text-xl font-bold text-white">3D E-Learning</span>
+              <span className="text-xl font-bold text-white">Elearning 3D+</span>
             </Link>
             <p className="text-gray-400 mb-6 text-sm">
-              Transformez votre apprentissage avec nos cours 3D immersifs et interactifs.
+              La plateforme complète pour la gestion d'organisations éducatives et l'apprentissage intelligent.
             </p>
             {/* Social Links */}
             <div className="flex items-center space-x-4">
@@ -176,7 +176,7 @@ export const Footer = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-sm text-gray-400">
-              © {currentYear} 3D E-Learning. Tous droits réservés.
+              © {currentYear} Elearning 3D+. Tous droits réservés.
             </p>
             <div className="flex items-center space-x-6 text-sm">
               <select className="bg-gray-800 text-gray-300 px-3 py-1 rounded-lg border border-gray-700 focus:outline-none focus:border-purple-600">
