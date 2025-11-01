@@ -6,6 +6,8 @@ import { AIFeatures } from '../../components/landing/AIFeatures';
 import { Partners } from '../../components/landing/Partners';
 import { Testimonials } from '../../components/landing/Testimonials';
 import { Pricing } from '../../components/landing/Pricing';
+import { Contact } from '../../components/landing/Contact';
+import { Newsletter } from '../../components/landing/Newsletter';
 import { Footer } from '../../components/landing/Footer';
 
 export const NewLandingPage = () => {
@@ -19,6 +21,8 @@ export const NewLandingPage = () => {
       <Partners />
       <Testimonials />
       <Pricing />
+      <Newsletter />
+      <Contact />
       <Footer />
     </div>
   );

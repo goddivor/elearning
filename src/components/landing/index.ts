@@ -6,4 +6,6 @@ export { AIFeatures } from './AIFeatures';
 export { Partners } from './Partners';
 export { Testimonials } from './Testimonials';
 export { Pricing } from './Pricing';
+export { Newsletter } from './Newsletter';
+export { Contact } from './Contact';
 export { Footer } from './Footer';
