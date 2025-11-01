@@ -1,5 +1,4 @@
 import { createBrowserRouter, RouterProvider } from "react-router";
-import { NewLandingPage } from "../pages/landing/NewLandingPage";
 import RootLayout from "../app.layout";
 import DashboardLayout from "../layouts/DashboardLayout";
 import RoleBasedRedirect from "../components/RoleBasedRedirect";
@@ -9,12 +8,13 @@ import { authRoutes } from "./auth.routes";
 import { adminRoutes } from "./admin.routes";
 import { instructorRoutes } from "./instructor.routes";
 import { studentRoutes } from "./student.routes";
+import LandingPage from "@/pages/landing";
 
 const router = createBrowserRouter([
   {
     element: <RootLayout />,
     children: [
-      { path: "/", element: <NewLandingPage /> },
+      { path: "/", element: <LandingPage /> },
       { path: "*", element: <NotFound /> },
     ],
   },

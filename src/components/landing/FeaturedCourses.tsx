@@ -398,7 +398,11 @@ export const FeaturedCourses = () => {
             transition={{ duration: 0.3 }}
             className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12"
           >
-            {filteredCourses.map((course, index) => (
+            {filteredCourses.map((course, index) => {
+              // Déterminer si c'est la dernière colonne (pour afficher le tooltip à gauche)
+              const isLastColumn = (index % 4) === 3;
+
+              return (
               <AnimatedSection key={course.id} delay={index * 0.05}>
                 <div
                   className="relative"
@@ -479,15 +483,17 @@ export const FeaturedCourses = () => {
                     </div>
                   </Link>
 
-                  {/* Tooltip on Hover */}
+                  {/* Tooltip on Hover - Position à droite ou à gauche selon la colonne */}
                   <AnimatePresence>
                     {hoveredCourse === course.id && (
                       <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        initial={{ opacity: 0, x: isLastColumn ? 10 : -10, scale: 0.95 }}
+                        animate={{ opacity: 1, x: 0, scale: 1 }}
+                        exit={{ opacity: 0, x: isLastColumn ? 10 : -10, scale: 0.95 }}
                         transition={{ duration: 0.2 }}
-                        className="absolute left-0 right-0 top-full mt-2 z-50 bg-white rounded-xl shadow-2xl border border-gray-200 p-5"
+                        className={`absolute top-0 z-50 bg-white rounded-xl shadow-2xl border border-gray-200 p-5 w-80 ${
+                          isLastColumn ? 'right-full mr-2' : 'left-full ml-2'
+                        }`}
                       >
                         <h4 className="font-bold text-gray-900 mb-2">{course.title}</h4>
                         <p className="text-sm text-gray-600 mb-4">{course.description}</p>
@@ -525,7 +531,8 @@ export const FeaturedCourses = () => {
                   </AnimatePresence>
                 </div>
               </AnimatedSection>
-            ))}
+            );
+            })}
           </motion.div>
         </AnimatePresence>
 
