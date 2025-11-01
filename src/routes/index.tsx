@@ -1,5 +1,5 @@
 import { createBrowserRouter, RouterProvider } from "react-router";
-import LandingPage from "../pages/landing";
+import { NewLandingPage } from "../pages/landing/NewLandingPage";
 import RootLayout from "../app.layout";
 import DashboardLayout from "../layouts/DashboardLayout";
 import RoleBasedRedirect from "../components/RoleBasedRedirect";
@@ -14,7 +14,7 @@ const router = createBrowserRouter([
   {
     element: <RootLayout />,
     children: [
-      { path: "/", element: <LandingPage /> },
+      { path: "/", element: <NewLandingPage /> },
       { path: "*", element: <NotFound /> },
     ],
   },
