@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
 import { useGoogleLogin } from '@react-oauth/google';
-import { EnvelopeSimple, GoogleLogo, FacebookLogo, ArrowRight, CheckCircle } from '@phosphor-icons/react';
+import FacebookLogin from '@greatsumini/react-facebook-login';
+import { EnvelopeSimple, FacebookLogo, ArrowRight, CheckCircle, GoogleLogo } from '@phosphor-icons/react';
 import { Header } from '@/components/landing/Header';
 import { Footer } from '@/components/landing/Footer';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SEND_REGISTER_OTP, VERIFY_REGISTER_OTP, GOOGLE_LOGIN } from '@/graphql/mutations/auth.mutations';
+import { SEND_REGISTER_OTP, VERIFY_REGISTER_OTP, GOOGLE_LOGIN, FACEBOOK_LOGIN } from '@/graphql/mutations/auth.mutations';
 import { useToast } from '@/contexts/toast-context';
+
 
 type Step = 'email' | 'otp';
 
@@ -24,6 +26,7 @@ const SignUp = () => {
   const [sendRegisterOtp, { loading: sendingOtp }] = useMutation(SEND_REGISTER_OTP);
   const [verifyRegisterOtp, { loading: verifying }] = useMutation(VERIFY_REGISTER_OTP);
   const [googleLogin, { loading: googleLoading }] = useMutation(GOOGLE_LOGIN);
+  const [facebookLogin, { loading: facebookLoading }] = useMutation(FACEBOOK_LOGIN);
 
   // Timer countdown
   useEffect(() => {
@@ -211,10 +214,37 @@ const SignUp = () => {
     onError: () => showError('Erreur', 'Échec de la connexion Google'),
   });
 
-  const handleFacebookSignup = () => {
-    // TODO: Implémenter l'inscription Facebook
-    console.log('Facebook signup clicked');
-    showError('Non implémenté', 'L\'inscription Facebook sera bientôt disponible');
+  const handleFacebookSuccess = async (response: { accessToken: string; userID: string; name?: string; email?: string; picture?: { data?: { url?: string } } }) => {
+    try {
+      // Appeler la mutation GraphQL avec les données Facebook
+      const { data } = await facebookLogin({
+        variables: {
+          input: {
+            facebookId: response.userID,
+            email: response.email || '',
+            fullName: response.name || '',
+            firstName: response.name?.split(' ')[0] || '',
+            lastName: response.name?.split(' ').slice(1).join(' ') || '',
+            avatar: response.picture?.data?.url,
+          },
+        },
+      });
+
+      if (data?.facebookLogin?.access_token) {
+        localStorage.setItem('access_token', data.facebookLogin.access_token);
+        const message = data.facebookLogin.isNewUser ? 'Compte créé !' : 'Connexion réussie !';
+        showSuccess(message, 'Bienvenue sur Elearning 3D+');
+        navigate('/dashboard');
+      }
+    } catch (err) {
+      console.error('Facebook login error:', err);
+      showError('Erreur', 'Impossible de se connecter avec Facebook');
+    }
+  };
+
+  const handleFacebookError = (error: unknown) => {
+    console.error('Facebook login error:', error);
+    showError('Erreur', 'Échec de la connexion Facebook');
   };
 
   const handleResendOtp = async () => {
@@ -350,13 +380,21 @@ const SignUp = () => {
                         <GoogleLogo size={28} weight="bold" className="text-red-500 group-hover:scale-110 transition-transform" />
                       </button>
 
-                      <button
-                        type="button"
-                        onClick={handleFacebookSignup}
-                        className="w-16 h-16 flex items-center justify-center border-2 border-gray-200 rounded-full hover:bg-gray-50 hover:border-blue-600 transition-all group"
-                      >
-                        <FacebookLogo size={28} weight="fill" className="text-blue-600 group-hover:scale-110 transition-transform" />
-                      </button>
+                      <FacebookLogin
+                        appId={import.meta.env.VITE_FACEBOOK_APP_ID || ''}
+                        onSuccess={handleFacebookSuccess}
+                        onFail={handleFacebookError}
+                        render={({ onClick }) => (
+                          <button
+                            type="button"
+                            onClick={onClick}
+                            disabled={facebookLoading}
+                            className="w-16 h-16 flex items-center justify-center border-2 border-gray-200 rounded-full hover:bg-gray-50 hover:border-blue-600 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <FacebookLogo size={28} weight="fill" className="text-blue-600 group-hover:scale-110 transition-transform" />
+                          </button>
+                        )}
+                      />
                     </div>
                   </form>
                 </motion.div>

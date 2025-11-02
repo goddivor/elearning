@@ -68,18 +68,20 @@ export const GOOGLE_LOGIN = gql`
   }
 `;
 
-export const LOGIN_WITH_FACEBOOK = gql`
-  mutation LoginWithFacebook($token: String!) {
-    loginWithFacebook(token: $token) {
+export const FACEBOOK_LOGIN = gql`
+  mutation FacebookLogin($input: FacebookLoginInput!) {
+    facebookLogin(input: $input) {
       access_token
       user {
         _id
         email
+        fullName
         firstName
         lastName
         role
         roles
       }
+      isNewUser
     }
   }
 `;
