@@ -1,348 +1,430 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeSlash, Student, ChalkboardTeacher } from '@phosphor-icons/react';
-import Button from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import SpinLoader from '@/components/ui/SpinLoader';
-import { cn } from '@/lib/utils';
-import useTitle from '@/hooks/useTitle';
-import { useAuth } from '@/contexts/AuthContext';
+import { useMutation } from '@apollo/client';
+import { EnvelopeSimple, GoogleLogo, FacebookLogo, ArrowRight, CheckCircle } from '@phosphor-icons/react';
+import { Header } from '@/components/landing/Header';
+import { Footer } from '@/components/landing/Footer';
+import { motion, AnimatePresence } from 'framer-motion';
+import { SEND_REGISTER_OTP, VERIFY_REGISTER_OTP } from '@/graphql/mutations/auth.mutations';
 import { useToast } from '@/contexts/toast-context';
-import type { ApiError } from '@/types/auth';
+
+type Step = 'email' | 'otp';
 
 const SignUp = () => {
-  useTitle("Inscription");
   const navigate = useNavigate();
-  const { success, error: showError } = useToast();
-  const { isAuthenticated } = useAuth();
+  const { success: showSuccess, error: showError } = useToast();
+  const [step, setStep] = useState<Step>('email');
+  const [email, setEmail] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [error, setError] = useState('');
+  const [resendTimer, setResendTimer] = useState(0);
 
+  const [sendRegisterOtp, { loading: sendingOtp }] = useMutation(SEND_REGISTER_OTP);
+  const [verifyRegisterOtp, { loading: verifying }] = useMutation(VERIFY_REGISTER_OTP);
+
+  // Timer countdown
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard');
+    if (resendTimer > 0) {
+      const interval = setInterval(() => {
+        setResendTimer((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(interval);
     }
-  }, [isAuthenticated, navigate]);
+  }, [resendTimer]);
 
-  // Empêcher le scroll bounce sur cette page
-  useEffect(() => {
-    document.body.style.overscrollBehavior = 'none';
-    document.documentElement.style.overscrollBehavior = 'none';
-
-    return () => {
-      document.body.style.overscrollBehavior = '';
-      document.documentElement.style.overscrollBehavior = '';
-    };
-  }, []);
-  
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    role: 'student' as 'student' | 'instructor'
-  });
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const roles = [
-    { value: 'student', label: 'Étudiant', icon: Student, description: 'Suivre des cours et apprendre' },
-    { value: 'instructor', label: 'Instructeur', icon: ChalkboardTeacher, description: 'Créer et enseigner des cours' }
-  ];
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    const checked = (e.target as HTMLInputElement).checked;
-    
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = 'Le prénom est requis';
-    }
-
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = 'Le nom est requis';
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'L\'email est requis';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'L\'email n\'est pas valide';
-    }
-
-    if (!formData.password) {
-      newErrors.password = 'Le mot de passe est requis';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Le mot de passe doit contenir au moins 6 caractères';
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Les mots de passe ne correspondent pas';
-    }
-
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
+    setError('');
+
+    if (!fullName.trim()) {
+      setError('Le nom complet est requis');
       return;
     }
 
-    setLoading(true);
-    
+    if (fullName.trim().length < 2) {
+      setError('Le nom doit contenir au moins 2 caractères');
+      return;
+    }
+
+    if (!email.trim()) {
+      setError('L\'email est requis');
+      return;
+    }
+
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      setError('L\'email n\'est pas valide');
+      return;
+    }
+
     try {
-      // D'abord créer le compte
-      const { AuthService } = await import('@/services/authService');
-      await AuthService.register({
-        email: formData.email,
-        password: formData.password,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        role: formData.role
+      const { data } = await sendRegisterOtp({
+        variables: {
+          input: {
+            email,
+          }
+        },
       });
-      
-      success('Inscription réussie', 'Votre compte a été créé avec succès!');
-      navigate('/dashboard');
-    } catch (error) {
-      const apiError = error as ApiError;
-      showError('Erreur d\'inscription', apiError.message);
-      
-      // Afficher les erreurs de validation si présentes
-      if (apiError.statusCode === 400) {
-        if (apiError.message.includes('email')) {
-          setErrors({ email: 'Cette adresse email est déjà utilisée' });
-        } else {
-          setErrors({ general: apiError.message });
-        }
+
+      if (data?.sendRegisterOTP?.message) {
+        showSuccess('Code envoyé', data.sendRegisterOTP.message);
+        setStep('otp');
+        setResendTimer(30);
+      } else {
+        setError('Erreur lors de l\'envoi du code');
       }
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      console.error('Error sending OTP:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de l\'envoi du code';
+      setError(errorMessage);
+      showError('Erreur', err instanceof Error ? err.message : 'Impossible d\'envoyer le code');
+    }
+  };
+
+  const handleOtpChange = (index: number, value: string) => {
+    // Garder seulement le dernier caractère si plusieurs sont saisis
+    const digit = value.slice(-1);
+
+    if (!/^\d*$/.test(digit)) return; // Accepter seulement les chiffres
+
+    const newOtp = [...otp];
+    newOtp[index] = digit;
+    setOtp(newOtp);
+
+    // Auto-focus next input
+    if (digit && index < 5) {
+      const nextInput = document.getElementById(`otp-${index + 1}`);
+      nextInput?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+
+    // Récupérer le texte collé
+    const pastedText = e.clipboardData.getData('text');
+
+    // Nettoyer la valeur collée (garder seulement les chiffres)
+    const digits = pastedText.replace(/\D/g, '').slice(0, 6);
+
+    if (digits.length === 0) return;
+
+    const newOtp = [...otp];
+
+    // Remplir tous les inputs avec les chiffres du code
+    for (let i = 0; i < 6; i++) {
+      newOtp[i] = digits[i] || '';
+    }
+
+    setOtp(newOtp);
+
+    // Focus sur le dernier input rempli ou le dernier input
+    const lastFilledIndex = Math.min(digits.length - 1, 5);
+    setTimeout(() => {
+      const targetInput = document.getElementById(`otp-${lastFilledIndex}`);
+      targetInput?.focus();
+    }, 0);
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      const prevInput = document.getElementById(`otp-${index - 1}`);
+      prevInput?.focus();
+    }
+  };
+
+  const handleOtpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    const otpCode = otp.join('');
+    if (otpCode.length !== 6) {
+      setError('Veuillez entrer le code complet');
+      return;
+    }
+
+    try {
+      const { data } = await verifyRegisterOtp({
+        variables: {
+          input: {
+            email,
+            code: otpCode,
+            fullName,
+          }
+        },
+      });
+
+      if (data?.verifyRegisterOTP?.access_token) {
+        // Store token
+        localStorage.setItem('access_token', data.verifyRegisterOTP.access_token);
+
+        showSuccess('Compte créé !', 'Bienvenue sur Elearning 3D+');
+        navigate('/dashboard');
+      }
+    } catch (err) {
+      console.error('Error verifying OTP:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Code invalide ou expiré';
+      setError(errorMessage);
+      showError('Erreur', errorMessage);
+    }
+  };
+
+  const handleGoogleSignup = () => {
+    // TODO: Implémenter l'inscription Google
+    console.log('Google signup clicked');
+    showError('Non implémenté', 'L\'inscription Google sera bientôt disponible');
+  };
+
+  const handleFacebookSignup = () => {
+    // TODO: Implémenter l'inscription Facebook
+    console.log('Facebook signup clicked');
+    showError('Non implémenté', 'L\'inscription Facebook sera bientôt disponible');
+  };
+
+  const handleResendOtp = async () => {
+    if (resendTimer > 0) return;
+
+    setError('');
+    try {
+      const { data } = await sendRegisterOtp({
+        variables: {
+          input: {
+            email,
+          }
+        },
+      });
+
+      if (data?.sendRegisterOTP?.message) {
+        showSuccess('Code renvoyé', data.sendRegisterOTP.message);
+        setResendTimer(30);
+        setOtp(['', '', '', '', '', '']);
+      }
+    } catch (err) {
+      console.error('Error resending OTP:', err);
+      showError('Erreur', 'Impossible de renvoyer le code');
     }
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 overflow-hidden">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Créer un compte
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Ou{' '}
-            <Link
-              to="/signin"
-              className="font-medium text-blue-600 hover:text-blue-500"
-            >
-              connectez-vous à votre compte existant
+    <div className="min-h-screen bg-white flex flex-col">
+      <Header />
+
+      <main className="flex-1 flex items-center justify-center px-4 py-32 min-h-[calc(100vh-400px)]">
+        <div className="max-w-md w-full">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4 leading-tight">
+              {step === 'email'
+                ? 'Créer votre compte gratuitement'
+                : 'Vérifiez votre email'
+              }
+            </h1>
+            {step === 'otp' && (
+              <p className="text-gray-600 text-lg">
+                Nous avons envoyé un code à <span className="font-semibold">{email}</span>
+              </p>
+            )}
+          </div>
+
+          {/* Main Card */}
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-lg p-8">
+            <AnimatePresence mode="wait">
+              {step === 'email' ? (
+                <motion.div
+                  key="email"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <form onSubmit={handleEmailSubmit} className="space-y-6">
+                    {/* Full Name Input */}
+                    <div>
+                      <label htmlFor="fullName" className="block text-sm font-semibold text-gray-700 mb-2">
+                        Nom complet
+                      </label>
+                      <input
+                        id="fullName"
+                        type="text"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="Jean Dupont"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all"
+                      />
+                    </div>
+
+                    {/* Email Input */}
+                    <div>
+                      <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
+                        Adresse email
+                      </label>
+                      <div className="relative">
+                        <EnvelopeSimple
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                          size={20}
+                        />
+                        <input
+                          id="email"
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="votre@email.com"
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all"
+                        />
+                      </div>
+                      {error && (
+                        <p className="mt-2 text-sm text-red-600">{error}</p>
+                      )}
+                    </div>
+
+                    {/* Submit Button */}
+                    <button
+                      type="submit"
+                      disabled={sendingOtp}
+                      className="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed group"
+                    >
+                      <span>{sendingOtp ? 'Envoi en cours...' : 'Continuer'}</span>
+                      {!sendingOtp && (
+                        <ArrowRight
+                          size={20}
+                          weight="bold"
+                          className="group-hover:translate-x-1 transition-transform"
+                        />
+                      )}
+                    </button>
+
+                    {/* Divider */}
+                    <div className="relative my-6">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-gray-300" />
+                      </div>
+                      <div className="relative flex justify-center text-sm">
+                        <span className="px-4 bg-white text-gray-500">Ou continuer avec</span>
+                      </div>
+                    </div>
+
+                    {/* Social Signup Buttons - Circular */}
+                    <div className="flex items-center justify-center space-x-6">
+                      <button
+                        type="button"
+                        onClick={handleGoogleSignup}
+                        className="w-16 h-16 flex items-center justify-center border-2 border-gray-200 rounded-full hover:bg-gray-50 hover:border-red-500 transition-all group"
+                      >
+                        <GoogleLogo size={28} weight="bold" className="text-red-500 group-hover:scale-110 transition-transform" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleFacebookSignup}
+                        className="w-16 h-16 flex items-center justify-center border-2 border-gray-200 rounded-full hover:bg-gray-50 hover:border-blue-600 transition-all group"
+                      >
+                        <FacebookLogo size={28} weight="fill" className="text-blue-600 group-hover:scale-110 transition-transform" />
+                      </button>
+                    </div>
+                  </form>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="otp"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <form onSubmit={handleOtpSubmit} className="space-y-6">
+                    {/* OTP Input */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-4 text-center">
+                        Entrez le code à 6 chiffres
+                      </label>
+                      <div className="flex justify-center space-x-2">
+                        {otp.map((digit, index) => (
+                          <input
+                            key={index}
+                            id={`otp-${index}`}
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={1}
+                            value={digit}
+                            onChange={(e) => handleOtpChange(index, e.target.value)}
+                            onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                            onPaste={handleOtpPaste}
+                            className="w-12 h-12 text-center text-xl font-bold border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all"
+                          />
+                        ))}
+                      </div>
+                      {error && (
+                        <p className="mt-4 text-sm text-red-600 text-center">{error}</p>
+                      )}
+                    </div>
+
+                    {/* Resend Code with Timer */}
+                    <div className="text-center">
+                      <p className="text-sm text-gray-600 mb-2">
+                        Vous n'avez pas reçu le code ?
+                      </p>
+                      {resendTimer > 0 ? (
+                        <p className="text-sm font-semibold text-gray-500">
+                          Renvoyer dans {resendTimer}s
+                        </p>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleResendOtp}
+                          disabled={sendingOtp}
+                          className="text-sm font-semibold text-purple-600 hover:text-purple-700 transition-colors disabled:opacity-50"
+                        >
+                          {sendingOtp ? 'Envoi...' : 'Renvoyer le code'}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Submit Button */}
+                    <button
+                      type="submit"
+                      disabled={verifying}
+                      className="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed group"
+                    >
+                      {verifying ? (
+                        <span>Vérification...</span>
+                      ) : (
+                        <>
+                          <CheckCircle size={20} weight="bold" />
+                          <span>Créer mon compte</span>
+                        </>
+                      )}
+                    </button>
+
+                    {/* Back Button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStep('email');
+                        setOtp(['', '', '', '', '', '']);
+                        setError('');
+                        setResendTimer(0);
+                      }}
+                      className="w-full text-sm text-gray-600 hover:text-gray-900 transition-colors font-medium"
+                    >
+                      Modifier l'adresse email
+                    </button>
+                  </form>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Sign In Link */}
+          <p className="mt-6 text-center text-sm text-gray-600">
+            Vous avez déjà un compte ?{' '}
+            <Link to="/signin" className="font-semibold text-purple-600 hover:text-purple-700 transition-colors">
+              Se connecter
             </Link>
           </p>
         </div>
-        
-        <div className="bg-white shadow-md rounded-lg border border-gray-200 p-8">
-          {errors.general && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-sm text-red-600">{errors.general}</p>
-            </div>
-          )}
-          <form className="space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            {/* First Name & Last Name */}
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                id="firstName"
-                name="firstName"
-                type="text"
-                label="Prénom"
-                required
-                value={formData.firstName}
-                onChange={handleChange}
-                placeholder="John"
-                error={errors.firstName}
-                className="focus:ring-blue-500 focus:border-blue-500"
-              />
-              
-              <Input
-                id="lastName"
-                name="lastName"
-                type="text"
-                label="Nom"
-                required
-                value={formData.lastName}
-                onChange={handleChange}
-                placeholder="Doe"
-                error={errors.lastName}
-                className="focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
+      </main>
 
-            {/* Email */}
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              label="Adresse e-mail"
-              autoComplete="email"
-              required
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="john.doe@email.com"
-              error={errors.email}
-              className="focus:ring-blue-500 focus:border-blue-500"
-            />
-
-            {/* Role Selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Vous êtes :
-              </label>
-              <div className="grid grid-cols-1 gap-3">
-                {roles.map((role) => (
-                  <label
-                    key={role.value}
-                    className={`relative flex cursor-pointer rounded-lg p-4 border-2 transition-colors ${
-                      formData.role === role.value
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-300 bg-white hover:bg-gray-50'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="role"
-                      value={role.value}
-                      checked={formData.role === role.value}
-                      onChange={handleChange}
-                      className="sr-only"
-                    />
-                    <div className="flex items-center">
-                      <role.icon className="h-6 w-6 text-gray-400 mr-3" />
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
-                          {role.label}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {role.description}
-                        </div>
-                      </div>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </div>
-            
-            {/* Password */}
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                Mot de passe
-              </label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  autoComplete="new-password"
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Minimum 6 caractères"
-                  error={errors.password}
-                  className="focus:ring-blue-500 focus:border-blue-500 pr-10"
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeSlash className="h-5 w-5 text-gray-400" />
-                  ) : (
-                    <Eye className="h-5 w-5 text-gray-400" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Confirm Password */}
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                Confirmer le mot de passe
-              </label>
-              <div className="relative">
-                <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  autoComplete="new-password"
-                  required
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  placeholder="Confirmer votre mot de passe"
-                  error={errors.confirmPassword}
-                  className="focus:ring-blue-500 focus:border-blue-500 pr-10"
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                >
-                  {showConfirmPassword ? (
-                    <EyeSlash className="h-5 w-5 text-gray-400" />
-                  ) : (
-                    <Eye className="h-5 w-5 text-gray-400" />
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Organization Registration Link */}
-          <div className="text-center">
-            <p className="text-sm text-gray-900">
-              Ou{' '}
-              <Link
-                to="/signup-organization"
-                className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
-              >
-                s'enregistrer en tant qu'organisation
-              </Link>
-            </p>
-          </div>
-
-          <div>
-            <Button
-              type="submit"
-              disabled={loading}
-              className={cn(
-                "w-full py-3 px-4 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors",
-                "flex items-center justify-center gap-2"
-              )}
-            >
-              {loading && <SpinLoader />}
-              {loading ? 'Création du compte...' : 'Créer mon compte'}
-            </Button>
-          </div>
-        </form>
-        </div>
-      </div>
+      <Footer />
     </div>
   );
 };
