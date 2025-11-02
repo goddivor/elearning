@@ -50,18 +50,20 @@ export const VERIFY_LOGIN_OTP = gql`
   }
 `;
 
-export const LOGIN_WITH_GOOGLE = gql`
-  mutation LoginWithGoogle($token: String!) {
-    loginWithGoogle(token: $token) {
+export const GOOGLE_LOGIN = gql`
+  mutation GoogleLogin($input: GoogleLoginInput!) {
+    googleLogin(input: $input) {
       access_token
       user {
         _id
         email
+        fullName
         firstName
         lastName
         role
         roles
       }
+      isNewUser
     }
   }
 `;

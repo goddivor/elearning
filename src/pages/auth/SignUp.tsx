@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
+import { useGoogleLogin } from '@react-oauth/google';
 import { EnvelopeSimple, GoogleLogo, FacebookLogo, ArrowRight, CheckCircle } from '@phosphor-icons/react';
 import { Header } from '@/components/landing/Header';
 import { Footer } from '@/components/landing/Footer';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SEND_REGISTER_OTP, VERIFY_REGISTER_OTP } from '@/graphql/mutations/auth.mutations';
+import { SEND_REGISTER_OTP, VERIFY_REGISTER_OTP, GOOGLE_LOGIN } from '@/graphql/mutations/auth.mutations';
 import { useToast } from '@/contexts/toast-context';
 
 type Step = 'email' | 'otp';
@@ -22,6 +23,7 @@ const SignUp = () => {
 
   const [sendRegisterOtp, { loading: sendingOtp }] = useMutation(SEND_REGISTER_OTP);
   const [verifyRegisterOtp, { loading: verifying }] = useMutation(VERIFY_REGISTER_OTP);
+  const [googleLogin, { loading: googleLoading }] = useMutation(GOOGLE_LOGIN);
 
   // Timer countdown
   useEffect(() => {
@@ -169,11 +171,45 @@ const SignUp = () => {
     }
   };
 
-  const handleGoogleSignup = () => {
-    // TODO: Implémenter l'inscription Google
-    console.log('Google signup clicked');
-    showError('Non implémenté', 'L\'inscription Google sera bientôt disponible');
+  const handleGoogleSuccess = async (tokenResponse: { access_token: string }) => {
+    try {
+      // Récupérer les informations du profil Google
+      const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+      });
+
+      const userInfo = await response.json();
+
+      // Appeler la mutation GraphQL
+      const { data } = await googleLogin({
+        variables: {
+          input: {
+            googleId: userInfo.sub,
+            email: userInfo.email,
+            fullName: userInfo.name,
+            firstName: userInfo.given_name,
+            lastName: userInfo.family_name,
+            avatar: userInfo.picture,
+          },
+        },
+      });
+
+      if (data?.googleLogin?.access_token) {
+        localStorage.setItem('access_token', data.googleLogin.access_token);
+        const message = data.googleLogin.isNewUser ? 'Compte créé !' : 'Connexion réussie !';
+        showSuccess(message, 'Bienvenue sur Elearning 3D+');
+        navigate('/dashboard');
+      }
+    } catch (err) {
+      console.error('Google login error:', err);
+      showError('Erreur', 'Impossible de se connecter avec Google');
+    }
   };
+
+  const handleGoogleSignup = useGoogleLogin({
+    onSuccess: handleGoogleSuccess,
+    onError: () => showError('Erreur', 'Échec de la connexion Google'),
+  });
 
   const handleFacebookSignup = () => {
     // TODO: Implémenter l'inscription Facebook
@@ -307,8 +343,9 @@ const SignUp = () => {
                     <div className="flex items-center justify-center space-x-6">
                       <button
                         type="button"
-                        onClick={handleGoogleSignup}
-                        className="w-16 h-16 flex items-center justify-center border-2 border-gray-200 rounded-full hover:bg-gray-50 hover:border-red-500 transition-all group"
+                        onClick={() => handleGoogleSignup()}
+                        disabled={googleLoading}
+                        className="w-16 h-16 flex items-center justify-center border-2 border-gray-200 rounded-full hover:bg-gray-50 hover:border-red-500 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <GoogleLogo size={28} weight="bold" className="text-red-500 group-hover:scale-110 transition-transform" />
                       </button>
