@@ -5,6 +5,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import { apolloClient } from "./lib/apollo-client";
 import { ToastProvider } from "./contexts/toast-context";
 import { AuthProvider } from "./contexts/AuthContext";
+import { NotificationProvider } from "./contexts/NotificationProvider";
 import { ToastContainer } from "./components/ui/Toast";
 import { AppRouter } from "./routes";
 
@@ -14,10 +15,12 @@ createRoot(document.getElementById("root")!).render(
   <GoogleOAuthProvider clientId={googleClientId}>
     <ApolloProvider client={apolloClient}>
       <AuthProvider>
-        <ToastProvider>
-          <AppRouter />
-          <ToastContainer />
-        </ToastProvider>
+        <NotificationProvider>
+          <ToastProvider>
+            <AppRouter />
+            <ToastContainer />
+          </ToastProvider>
+        </NotificationProvider>
       </AuthProvider>
     </ApolloProvider>
   </GoogleOAuthProvider>

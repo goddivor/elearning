@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, LogoutCurve, Setting2, Book1 } from 'iconsax-react';
+import { User, LogoutCurve, Setting2, Book1, Heart, Notification } from 'iconsax-react';
 
 export const UserMenu = () => {
   const { user, logout } = useAuth();
@@ -108,6 +108,22 @@ export const UserMenu = () => {
             >
               <User size={18} variant="Outline" color="#8B5CF6" />
               <span>Mon Profil</span>
+            </button>
+
+            <button
+              onClick={() => handleNavigation('/dashboard/favorites')}
+              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-3"
+            >
+              <Heart size={18} variant="Outline" color="#EF4444" />
+              <span>Mes Favoris</span>
+            </button>
+
+            <button
+              onClick={() => handleNavigation('/dashboard/notifications')}
+              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-3"
+            >
+              <Notification size={18} variant="Outline" color="#3B82F6" />
+              <span>Notifications</span>
             </button>
 
             <button

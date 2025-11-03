@@ -30,7 +30,7 @@ export const Partners = () => {
             Nos partenaires
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Rejoignez des milliers d'organisations qui forment leurs équipes avec 3D E-Learning
+            Rejoignez des milliers d'organisations qui forment leurs équipes avec Elearning 3D+
           </p>
         </div>
 

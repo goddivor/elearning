@@ -6,6 +6,7 @@ import NotFound from "../pages/NotFound";
 import { authRoutes } from "./auth.routes";
 import LandingPage from "@/pages/landing";
 import DashboardHome from "@/pages/dashboard/Home";
+import Settings from "@/pages/dashboard/Settings";
 
 const router = createBrowserRouter([
   {
@@ -33,7 +34,7 @@ const router = createBrowserRouter([
       // { path: "instructor", element: <InstructorPage /> },
       // { path: "organization", element: <OrganizationPage /> },
       // { path: "profile", element: <Profile /> },
-      // { path: "settings", element: <Settings /> },
+      { path: "settings", element: <Settings /> },
     ],
   },
 ]);

@@ -1,4 +1,4 @@
-# 3D E-Learning Platform - Frontend
+# Elearning 3D+ Platform - Frontend
 
 Modern and responsive frontend for the 3D interactive e-learning platform built with React, TypeScript, and Vite.
 
@@ -268,4 +268,4 @@ For production, update this to your production API URL.
 
 ## License
 
-Private license for 3D E-Learning Platform.
+Private license for Elearning 3D+ Platform.

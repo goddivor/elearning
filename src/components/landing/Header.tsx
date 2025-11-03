@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { List, X, MagnifyingGlass, ShoppingCart } from '@phosphor-icons/react';
+import { List, X, MagnifyingGlass, ShoppingCart, Heart } from '@phosphor-icons/react';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserMenu } from './UserMenu';
+import { NotificationsDropdown } from './NotificationsDropdown';
 
 export const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [cartItemCount] = useState(0); // Pour l'instant 0, sera géré avec un contexte plus tard
+  const [favoritesCount] = useState(0); // Nombre de favoris
   const { isAuthenticated } = useAuth();
 
   return (
@@ -60,6 +62,28 @@ export const Header = () => {
                 </span>
               )}
             </button>
+
+            {/* Favorites - Only when authenticated */}
+            {isAuthenticated && (
+              <Link
+                to="/dashboard/favorites"
+                className="relative p-2 text-gray-700 hover:text-purple-600 transition-colors hidden md:block"
+              >
+                <Heart size={24} weight="bold" />
+                {favoritesCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {favoritesCount}
+                  </span>
+                )}
+              </Link>
+            )}
+
+            {/* Notifications Dropdown - Only when authenticated */}
+            {isAuthenticated && (
+              <div className="hidden md:block">
+                <NotificationsDropdown />
+              </div>
+            )}
 
             {/* Auth Buttons or User Menu */}
             {isAuthenticated ? (

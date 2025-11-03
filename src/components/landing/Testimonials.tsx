@@ -18,7 +18,7 @@ const testimonials: Testimonial[] = [
     role: 'Architecte 3D',
     company: 'DesignLab Studio',
     content:
-      "Grâce à 3D E-Learning, j'ai pu maîtriser Blender en seulement 3 mois. Les cours sont exceptionnels et les instructeurs très compétents. J'ai même obtenu une promotion !",
+      "Grâce à Elearning 3D+, j'ai pu maîtriser Blender en seulement 3 mois. Les cours sont exceptionnels et les instructeurs très compétents. J'ai même obtenu une promotion !",
     rating: 5,
     avatar: 'https://i.pravatar.cc/150?u=thomas',
   },

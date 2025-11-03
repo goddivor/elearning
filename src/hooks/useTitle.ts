@@ -3,9 +3,9 @@ import { useEffect } from 'react';
 /**
  * Hook personnalisé pour gérer le titre de la page
  * @param title - Le titre à afficher pour cette page
- * @param suffix - Suffixe optionnel (par défaut: "3D E-Learning")
+ * @param suffix - Suffixe optionnel (par défaut: "Elearning 3D+")
  */
-const useTitle = (title: string, suffix: string = "3D E-Learning") => {
+const useTitle = (title: string, suffix: string = "Elearning 3D+") => {
   useEffect(() => {
     const fullTitle = title ? `${title} - ${suffix}` : suffix;
     document.title = fullTitle;
