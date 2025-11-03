@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { List, X, MagnifyingGlass, ShoppingCart } from '@phosphor-icons/react';
+import { useAuth } from '@/contexts/AuthContext';
+import { UserMenu } from './UserMenu';
 
 export const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [cartItemCount] = useState(0); // Pour l'instant 0, sera géré avec un contexte plus tard
+  const { isAuthenticated } = useAuth();
 
   return (
     <header className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-50">
@@ -58,21 +61,27 @@ export const Header = () => {
               )}
             </button>
 
-            {/* Auth Buttons */}
-            <div className="hidden md:flex items-center space-x-3">
-              <Link
-                to="/signin"
-                className="px-4 py-2 text-gray-700 hover:text-purple-600 font-medium transition-colors"
-              >
-                Se connecter
-              </Link>
-              <Link
-                to="/signup"
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
-              >
-                S'inscrire
-              </Link>
-            </div>
+            {/* Auth Buttons or User Menu */}
+            {isAuthenticated ? (
+              <div className="hidden md:flex items-center">
+                <UserMenu />
+              </div>
+            ) : (
+              <div className="hidden md:flex items-center space-x-3">
+                <Link
+                  to="/signin"
+                  className="px-4 py-2 text-gray-700 hover:text-purple-600 font-medium transition-colors"
+                >
+                  Se connecter
+                </Link>
+                <Link
+                  to="/signup"
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                >
+                  S'inscrire
+                </Link>
+              </div>
+            )}
 
             {/* Mobile Menu Toggle */}
             <button
@@ -125,20 +134,32 @@ export const Header = () => {
                 Enseigner
               </Link>
               <div className="pt-4 border-t border-gray-100 space-y-3">
-                <Link
-                  to="/signin"
-                  className="block w-full text-center px-4 py-2 border border-purple-600 text-purple-600 rounded-lg hover:bg-purple-50 transition-colors font-medium"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Se connecter
-                </Link>
-                <Link
-                  to="/signup"
-                  className="block w-full text-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  S'inscrire
-                </Link>
+                {isAuthenticated ? (
+                  <Link
+                    to="/dashboard"
+                    className="block w-full text-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Mon Dashboard
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      to="/signin"
+                      className="block w-full text-center px-4 py-2 border border-purple-600 text-purple-600 rounded-lg hover:bg-purple-50 transition-colors font-medium"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Se connecter
+                    </Link>
+                    <Link
+                      to="/signup"
+                      className="block w-full text-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      S'inscrire
+                    </Link>
+                  </>
+                )}
               </div>
             </nav>
           </div>
