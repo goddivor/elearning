@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
 import { useGoogleLogin } from '@react-oauth/google';
 import FacebookLogin from '@greatsumini/react-facebook-login';
@@ -14,7 +14,6 @@ import { useToast } from '@/contexts/toast-context';
 type Step = 'email' | 'otp';
 
 const SignIn = () => {
-  const navigate = useNavigate();
   const { success: showSuccess, error: showError } = useToast();
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
@@ -148,11 +147,16 @@ const SignIn = () => {
       });
 
       if (data?.verifyLoginOTP?.access_token) {
-        // Store token
+        // Store token and user
         localStorage.setItem('access_token', data.verifyLoginOTP.access_token);
+        if (data.verifyLoginOTP.user) {
+          localStorage.setItem('user', JSON.stringify(data.verifyLoginOTP.user));
+        }
 
         showSuccess('Connexion réussie !', 'Bienvenue sur Elearning 3D+');
-        navigate('/dashboard');
+
+        // Force reload to reinitialize AuthContext
+        window.location.href = '/';
       }
     } catch (err) {
       console.error('Error verifying OTP:', err);
@@ -187,9 +191,14 @@ const SignIn = () => {
 
       if (data?.googleLogin?.access_token) {
         localStorage.setItem('access_token', data.googleLogin.access_token);
+        if (data.googleLogin.user) {
+          localStorage.setItem('user', JSON.stringify(data.googleLogin.user));
+        }
         const message = data.googleLogin.isNewUser ? 'Compte créé !' : 'Connexion réussie !';
         showSuccess(message, 'Bienvenue sur Elearning 3D+');
-        navigate('/dashboard');
+
+        // Force reload to reinitialize AuthContext
+        window.location.href = '/';
       }
     } catch (err) {
       console.error('Google login error:', err);
@@ -220,9 +229,14 @@ const SignIn = () => {
 
       if (data?.facebookLogin?.access_token) {
         localStorage.setItem('access_token', data.facebookLogin.access_token);
+        if (data.facebookLogin.user) {
+          localStorage.setItem('user', JSON.stringify(data.facebookLogin.user));
+        }
         const message = data.facebookLogin.isNewUser ? 'Compte créé !' : 'Connexion réussie !';
         showSuccess(message, 'Bienvenue sur Elearning 3D+');
-        navigate('/dashboard');
+
+        // Force reload to reinitialize AuthContext
+        window.location.href = '/';
       }
     } catch (err) {
       console.error('Facebook login error:', err);
