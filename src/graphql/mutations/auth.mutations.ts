@@ -43,8 +43,11 @@ export const VERIFY_LOGIN_OTP = gql`
         email
         firstName
         lastName
+        fullName
         role
         roles
+        activeRole
+        avatar
       }
     }
   }
@@ -62,6 +65,8 @@ export const GOOGLE_LOGIN = gql`
         lastName
         role
         roles
+        activeRole
+        avatar
       }
       isNewUser
     }
@@ -80,6 +85,8 @@ export const FACEBOOK_LOGIN = gql`
         lastName
         role
         roles
+        activeRole
+        avatar
       }
       isNewUser
     }

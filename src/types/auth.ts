@@ -2,9 +2,12 @@ export interface User {
   _id: string;
   id?: string; // Alias pour _id (rétro-compatibilité)
   email: string;
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
+  fullName?: string; // Nom complet (peut venir de Google OAuth)
   role: 'student' | 'instructor' | 'admin' | 'organization';
+  roles?: Array<'student' | 'instructor' | 'admin' | 'organization'>; // Multi-rôles
+  activeRole?: 'student' | 'instructor' | 'admin' | 'organization'; // Rôle actif
   isActive: boolean;
   avatar?: string;
   bannerImage?: string;

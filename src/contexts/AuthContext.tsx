@@ -7,6 +7,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithOAuth: (userData: User) => void;
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
 }
@@ -32,15 +33,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     // Vérifier si un utilisateur est déjà connecté au démarrage
-    const initializeAuth = async () => {
+    const initializeAuth = () => {
       try {
         const currentUser = AuthService.getCurrentUser();
         const token = AuthService.getAccessToken();
-        
+
         if (currentUser && token) {
-          // Valider le token en récupérant le profil
-          const freshUserData = await AuthService.getProfile();
-          setUser(freshUserData);
+          // Utiliser les données du localStorage directement
+          // Pas besoin de valider le token à chaque chargement
+          setUser(currentUser);
         }
       } catch {
         // Token invalide ou expiré, nettoyer le localStorage
@@ -54,10 +55,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
-    await AuthService.login({ email, password });
-    // Récupérer le profil complet incluant l'avatar
-    const freshUserData = await AuthService.getProfile();
-    setUser(freshUserData);
+    const response = await AuthService.login({ email, password });
+    // Utiliser directement les données du login
+    setUser(response.user);
+  };
+
+  const loginWithOAuth = (userData: User) => {
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
   };
 
   const logout = () => {
@@ -78,6 +83,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isAuthenticated: !!user,
     isLoading,
     login,
+    loginWithOAuth,
     logout,
     updateUser,
   };
