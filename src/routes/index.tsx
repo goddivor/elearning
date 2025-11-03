@@ -1,14 +1,11 @@
 import { createBrowserRouter, RouterProvider } from "react-router";
 import RootLayout from "../app.layout";
-import DashboardLayout from "../layouts/DashboardLayout";
-import RoleBasedRedirect from "../components/RoleBasedRedirect";
+import NewDashboardLayout from "../layouts/NewDashboardLayout";
 import NotFound from "../pages/NotFound";
 
 import { authRoutes } from "./auth.routes";
-import { adminRoutes } from "./admin.routes";
-import { instructorRoutes } from "./instructor.routes";
-import { studentRoutes } from "./student.routes";
 import LandingPage from "@/pages/landing";
+import DashboardHome from "@/pages/dashboard/Home";
 
 const router = createBrowserRouter([
   {
@@ -22,22 +19,21 @@ const router = createBrowserRouter([
   // Routes d'authentification
   ...authRoutes,
 
-  // Routes du dashboard avec layout
+  // Routes du dashboard unique avec layout
   {
     path: "/dashboard",
-    element: <DashboardLayout />,
+    element: <NewDashboardLayout />,
     children: [
-      // Redirection selon le rôle utilisateur
-      { path: "", element: <RoleBasedRedirect /> },
+      // Page d'accueil du dashboard
+      { path: "", element: <DashboardHome /> },
 
-      // Routes admin
-      ...adminRoutes,
-
-      // Routes instructor
-      ...instructorRoutes,
-
-      // Routes student
-      ...studentRoutes,
+      // Les autres routes seront ajoutées progressivement
+      // { path: "my-courses", element: <MyCourses /> },
+      // { path: "catalog", element: <Catalog /> },
+      // { path: "instructor", element: <InstructorPage /> },
+      // { path: "organization", element: <OrganizationPage /> },
+      // { path: "profile", element: <Profile /> },
+      // { path: "settings", element: <Settings /> },
     ],
   },
 ]);
