@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Edit2, Save2, CloseSquare, Lock, Camera, Profile2User, Location, Link2, Add, Trash, Global } from 'iconsax-react';
+import { Edit2, Save2, CloseSquare, Lock, Camera, Profile2User, Location, Link2, Add, Trash } from 'iconsax-react';
 import useTitle from '@/hooks/useTitle';
 import Button from '@/components/ui/Button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -146,6 +146,7 @@ const StudentProfile = () => {
     try {
       setLoading(true);
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const updateData: any = {
         firstName: formData.firstName,
         lastName: formData.lastName,

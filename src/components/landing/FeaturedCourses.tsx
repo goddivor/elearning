@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Star, Clock, Users, ArrowRight, ShoppingCart, BookOpen } from '@phosphor-icons/react';
+import { Star, Clock, ArrowRight, ShoppingCart, BookOpen } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AnimatedSection, FadeIn } from './AnimatedSection';
 

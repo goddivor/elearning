@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Check, Crown, Lightning, Sparkle } from '@phosphor-icons/react';
-import { AnimatedSection, FadeIn, ScaleIn } from './AnimatedSection';
+import { FadeIn, ScaleIn } from './AnimatedSection';
 
 interface PricingPlan {
   id: string;

@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
 import { Play, TrendUp, Users, BookOpen } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SlideInLeft, SlideInRight, FadeIn } from './AnimatedSection';
+import { SlideInLeft, SlideInRight } from './AnimatedSection';
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const courses = [
   {
@@ -41,6 +42,7 @@ const courses = [
 
 export const Hero = () => {
   const [currentCourseIndex, setCurrentCourseIndex] = useState(0);
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -102,16 +104,36 @@ export const Hero = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link
-                to="/signup"
-                className="inline-flex items-center justify-center px-8 py-4 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-all transform hover:scale-105 font-semibold text-lg shadow-lg shadow-purple-200"
-              >
-                Commencer gratuitement
-              </Link>
-              <button className="inline-flex items-center justify-center px-8 py-4 bg-white text-gray-900 rounded-xl border-2 border-gray-200 hover:border-purple-600 transition-all font-semibold text-lg space-x-2 group">
-                <Play size={24} weight="fill" className="text-purple-600 group-hover:scale-110 transition-transform" />
-                <span>Voir la démo</span>
-              </button>
+              {isAuthenticated ? (
+                <>
+                  <Link
+                    to="/dashboard"
+                    className="inline-flex items-center justify-center px-8 py-4 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-all transform hover:scale-105 font-semibold text-lg shadow-lg shadow-purple-200"
+                  >
+                    Accéder à mon Dashboard
+                  </Link>
+                  <Link
+                    to="/courses"
+                    className="inline-flex items-center justify-center px-8 py-4 bg-white text-gray-900 rounded-xl border-2 border-gray-200 hover:border-purple-600 transition-all font-semibold text-lg space-x-2 group"
+                  >
+                    <BookOpen size={24} weight="bold" className="text-purple-600 group-hover:scale-110 transition-transform" />
+                    <span>Explorer les cours</span>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/signup"
+                    className="inline-flex items-center justify-center px-8 py-4 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-all transform hover:scale-105 font-semibold text-lg shadow-lg shadow-purple-200"
+                  >
+                    Commencer gratuitement
+                  </Link>
+                  <button className="inline-flex items-center justify-center px-8 py-4 bg-white text-gray-900 rounded-xl border-2 border-gray-200 hover:border-purple-600 transition-all font-semibold text-lg space-x-2 group">
+                    <Play size={24} weight="fill" className="text-purple-600 group-hover:scale-110 transition-transform" />
+                    <span>Voir la démo</span>
+                  </button>
+                </>
+              )}
             </div>
 
             {/* Trust Badge */}
