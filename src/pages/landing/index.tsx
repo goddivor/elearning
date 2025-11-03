@@ -9,8 +9,22 @@ import { Pricing } from '../../components/landing/Pricing';
 import { Contact } from '../../components/landing/Contact';
 import { Newsletter } from '../../components/landing/Newsletter';
 import { Footer } from '../../components/landing/Footer';
+import { useGoogleOneTap } from '../../hooks/useGoogleOneTap';
 
 const LandingPage = () => {
+  // Initialize Google One Tap
+  useGoogleOneTap({
+    clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
+    autoSelect: true,
+    cancelOnTapOutside: false,
+    onSuccess: () => {
+      console.log('Google One Tap authentication successful');
+    },
+    onError: (error) => {
+      console.error('Google One Tap authentication error:', error);
+    },
+  });
+
   return (
     <div className="min-h-screen bg-white">
       <Header />
