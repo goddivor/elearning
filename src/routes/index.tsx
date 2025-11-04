@@ -10,6 +10,9 @@ import Settings from "@/pages/dashboard/Settings";
 import BecomeInstructor from "@/pages/BecomeInstructor";
 import InstructorApplication from "@/pages/InstructorApplication";
 import ApplicationSubmitted from "@/pages/ApplicationSubmitted";
+import AdminAccess from "@/pages/admin/AdminAccess";
+import AdminLogin from "@/pages/admin/AdminLogin";
+import AdminDashboard from "@/pages/admin/AdminDashboard";
 
 const router = createBrowserRouter([
   {
@@ -21,6 +24,20 @@ const router = createBrowserRouter([
       { path: "/application-submitted", element: <ApplicationSubmitted /> },
       { path: "*", element: <NotFound /> },
     ],
+  },
+
+  // Routes d'administration (sans layout pour sécurité)
+  {
+    path: "/admin-access/:token",
+    element: <AdminAccess />,
+  },
+  {
+    path: "/admin-login/:token",
+    element: <AdminLogin />,
+  },
+  {
+    path: "/admin/dashboard",
+    element: <AdminDashboard />,
   },
 
   // Routes d'authentification
