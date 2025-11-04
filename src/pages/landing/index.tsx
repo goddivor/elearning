@@ -1,4 +1,3 @@
-import { Header } from '../../components/landing/Header';
 import { Hero } from '../../components/landing/Hero';
 import { FeaturedCourses } from '../../components/landing/FeaturedCourses';
 import { OrganizationsFeature } from '../../components/landing/OrganizationsFeature';
@@ -8,7 +7,6 @@ import { Testimonials } from '../../components/landing/Testimonials';
 import { Pricing } from '../../components/landing/Pricing';
 import { Contact } from '../../components/landing/Contact';
 import { Newsletter } from '../../components/landing/Newsletter';
-import { Footer } from '../../components/landing/Footer';
 import { useGoogleOneTap } from '../../hooks/useGoogleOneTap';
 
 const LandingPage = () => {
@@ -27,7 +25,6 @@ const LandingPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <Header />
       <Hero />
       <FeaturedCourses />
       <OrganizationsFeature />
@@ -37,7 +34,6 @@ const LandingPage = () => {
       <Pricing />
       <Newsletter />
       <Contact />
-      <Footer />
     </div>
   );
 };
