@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation } from '@apollo/client';
 import { useGoogleLogin } from '@react-oauth/google';
 import FacebookLogin from '@greatsumini/react-facebook-login';
@@ -16,6 +16,8 @@ type Step = 'email' | 'otp';
 
 const SignIn = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectUrl = searchParams.get('redirect') || '/';
   const { loginWithOAuth } = useAuth();
   const { success: showSuccess, error: showError } = useToast();
   const [step, setStep] = useState<Step>('email');
@@ -159,7 +161,7 @@ const SignIn = () => {
         showSuccess('Connexion réussie !', 'Bienvenue sur Elearning 3D+');
 
         // Navigate without reload for smooth transition
-        navigate('/', { replace: true });
+        navigate(redirectUrl, { replace: true });
       }
     } catch (err) {
       console.error('Error verifying OTP:', err);
@@ -201,7 +203,7 @@ const SignIn = () => {
         showSuccess(message, 'Bienvenue sur Elearning 3D+');
 
         // Navigate without reload for smooth transition
-        navigate('/', { replace: true });
+        navigate(redirectUrl, { replace: true });
       }
     } catch (err) {
       console.error('Google login error:', err);
@@ -239,7 +241,7 @@ const SignIn = () => {
         showSuccess(message, 'Bienvenue sur Elearning 3D+');
 
         // Navigate without reload for smooth transition
-        navigate('/', { replace: true });
+        navigate(redirectUrl, { replace: true });
       }
     } catch (err) {
       console.error('Facebook login error:', err);

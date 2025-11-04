@@ -9,7 +9,10 @@ export const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [cartItemCount] = useState(0); // Pour l'instant 0, sera géré avec un contexte plus tard
   const [favoritesCount] = useState(0); // Nombre de favoris
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+
+  // Vérifier si l'utilisateur est instructeur
+  const isInstructor = user?.roles?.includes('instructor') || user?.role === 'instructor';
 
   return (
     <header className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-50">
@@ -31,8 +34,11 @@ export const Header = () => {
             <Link to="/categories" className="text-gray-700 hover:text-purple-600 transition-colors">
               Catégories
             </Link>
-            <Link to="/become-instructor" className="text-gray-700 hover:text-purple-600 transition-colors">
-              Enseigner
+            <Link
+              to={isInstructor ? "/dashboard" : "/become-instructor"}
+              className="text-gray-700 hover:text-purple-600 transition-colors"
+            >
+              {isInstructor ? "Mon espace instructeur" : "Enseigner"}
             </Link>
           </nav>
 
@@ -151,11 +157,11 @@ export const Header = () => {
                 Catégories
               </Link>
               <Link
-                to="/become-instructor"
+                to={isInstructor ? "/dashboard" : "/become-instructor"}
                 className="text-gray-700 hover:text-purple-600 transition-colors py-2"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Enseigner
+                {isInstructor ? "Mon espace instructeur" : "Enseigner"}
               </Link>
               <div className="pt-4 border-t border-gray-100 space-y-3">
                 {isAuthenticated ? (
