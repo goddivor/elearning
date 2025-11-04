@@ -7,12 +7,18 @@ import { authRoutes } from "./auth.routes";
 import LandingPage from "@/pages/landing";
 import DashboardHome from "@/pages/dashboard/Home";
 import Settings from "@/pages/dashboard/Settings";
+import BecomeInstructor from "@/pages/BecomeInstructor";
+import InstructorApplication from "@/pages/InstructorApplication";
+import ApplicationSubmitted from "@/pages/ApplicationSubmitted";
 
 const router = createBrowserRouter([
   {
     element: <RootLayout />,
     children: [
       { path: "/", element: <LandingPage /> },
+      { path: "/become-instructor", element: <BecomeInstructor /> },
+      { path: "/become-instructor/apply", element: <InstructorApplication /> },
+      { path: "/application-submitted", element: <ApplicationSubmitted /> },
       { path: "*", element: <NotFound /> },
     ],
   },
